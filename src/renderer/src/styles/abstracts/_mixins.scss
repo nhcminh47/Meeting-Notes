@@ -1,0 +1,23 @@
+@mixin focus-ring {
+  outline: 3px solid color-mix(in srgb, var(--color-focus) 85%, transparent);
+  outline-offset: 3px;
+}
+
+@mixin panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  box-shadow: var(--shadow-panel);
+}
+
+@mixin mobile {
+  @media (max-width: 720px) {
+    @content;
+  }
+}
+
+@mixin compact {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
