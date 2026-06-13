@@ -1,6 +1,6 @@
 {
   "name": "local-whisper-studio",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Secure local speech-to-text desktop app powered by whisper.cpp",
   "main": "./out/main/index.js",
   "author": "Local Whisper Studio",
