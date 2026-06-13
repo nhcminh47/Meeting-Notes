@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/nhcminh47/Meeting-Notes/compare/v0.2.0...v0.2.1) (2026-06-13)
+
+
+### Bug Fixes
+
+* automate release pull request merges ([7b8e9d6](https://github.com/nhcminh47/Meeting-Notes/commit/7b8e9d6e5fb80af929c1287ad2ae4f17cbf92f22))
+* automate release pull request merges ([#3](https://github.com/nhcminh47/Meeting-Notes/issues/3)) ([43823f8](https://github.com/nhcminh47/Meeting-Notes/commit/43823f80b96f01735477e0843869fb703a12b816))
+
 ## [0.2.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.1.4...v0.2.0) (2026-06-13)
 
 
