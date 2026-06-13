@@ -42,13 +42,23 @@ GitHub Actions artifact.
 ## Releases
 
 Release Please maintains a release pull request from Conventional Commits merged into `master`.
-Merging that pull request updates the version and changelog, creates a `vX.Y.Z` tag and draft
-GitHub Release, and starts the release build. The workflow publishes the release only after the
-Windows installer and its SHA-256 checksum upload successfully.
+After its Windows CI passes, the workflow automatically squash-merges that release pull request.
+The merge updates the version and changelog, creates a `vX.Y.Z` tag and draft GitHub Release, and
+starts the release build. The workflow publishes the release only after the Windows installer and
+its SHA-256 checksum upload successfully.
 
 The installer is currently unsigned, so Windows SmartScreen may display a warning.
 
-Repository maintainers must enable **Allow GitHub Actions to create and approve pull requests**
-under **Settings > Actions > General**. Release Please uses the repository `GITHUB_TOKEN`, so its
-automated release pull request does not start a separate pull request workflow. Feature pull
-requests receive full CI, and the release workflow repeats validation before publishing assets.
+Repository maintainers must create an Actions secret named `RELEASE_AUTOMATION_TOKEN`. Use a
+fine-grained personal access token restricted to this repository with read/write access to
+**Contents**, **Issues**, and **Pull requests**. The token allows Release Please pull requests and
+their merges to trigger subsequent workflows; do not replace it with `GITHUB_TOKEN`.
+
+Configure the token without writing it to a file:
+
+```powershell
+gh secret set RELEASE_AUTOMATION_TOKEN --repo nhcminh47/Meeting-Notes
+```
+
+Feature pull requests remain manually merged. Only branches beginning with
+`release-please--branches--master--` are automatically merged after successful CI.
