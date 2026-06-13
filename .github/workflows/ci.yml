@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate pull request title
         if: ${{ github.event_name == 'pull_request' }}
@@ -34,13 +34,13 @@ jobs:
           }
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11.6.0
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: pnpm
@@ -58,7 +58,7 @@ jobs:
         run: pnpm package:win
 
       - name: Upload Windows installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: local-whisper-studio-windows-${{ github.sha }}
           path: release/Local Whisper Studio Setup *.exe
