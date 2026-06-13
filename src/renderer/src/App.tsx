@@ -1,168 +1,36 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   AudioFileSelection,
-  LogEvent,
   LogSnapshot,
   TranscriptionJobStatus
 } from "../../shared/apiTypes";
 import type { RuntimeStatus } from "../../main/runtime/runtimeTypes";
-
-type BusyAction = "install" | "repair" | "medium" | null;
-
-const ITEM_LABELS: Record<string, string> = {
-  ffmpeg: "FFmpeg",
-  whisper: "whisper.cpp",
-  modelSmall: "Small model",
-  modelMedium: "Medium model"
-};
-
-const ITEM_SIZES: Record<string, string> = {
-  ffmpeg: "211 MB",
-  whisper: "4 MB",
-  modelSmall: "465 MB",
-  modelMedium: "1.43 GB"
-};
+import type { MascotState } from "./components/atoms/CatMascot";
+import { AppHeader } from "./components/organisms/AppHeader";
+import {
+  RuntimePanel,
+  type BusyAction
+} from "./components/organisms/RuntimePanel";
+import { TranscriptionWorkspace } from "./components/organisms/TranscriptionWorkspace";
+import { DiagnosticsPanel } from "./components/organisms/DiagnosticsPanel";
 
 function friendlyError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/^Error invoking remote method '[^']+': Error: /, "");
 }
 
-function RuntimePanel(props: {
-  status: RuntimeStatus | null;
-  busy: BusyAction;
-  workflowLocked: boolean;
-  onInstall: () => void;
-  onRepair: () => void;
-  onMedium: () => void;
-}) {
-  return (
-    <section className="panel runtime-panel">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Local dependencies</p>
-          <h2>Runtime setup</h2>
-        </div>
-        <span className="version">Manifest {props.status?.runtimeVersion ?? "..."}</span>
-      </div>
-
-      <div className="runtime-grid">
-        {Object.entries(ITEM_LABELS).map(([key, label]) => {
-          const item = props.status?.items[key];
-          const status = item?.status ?? "missing";
-          return (
-            <div className="runtime-item" key={key}>
-              <div>
-                <strong>{label}</strong>
-                <small>{ITEM_SIZES[key]} download</small>
-              </div>
-              <div className="status-wrap">
-                <span className={`status status-${status}`}>{status}</span>
-                {typeof item?.progress === "number" &&
-                  ["downloading", "extracting"].includes(status) && (
-                    <div className="progress" aria-label={`${label} progress`}>
-                      <span style={{ width: `${item.progress}%` }} />
-                    </div>
-                  )}
-              </div>
-              {item?.error && <p className="inline-error">{item.error}</p>}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="actions">
-        <button
-          onClick={props.onInstall}
-          disabled={props.busy !== null || props.workflowLocked}
-        >
-          {props.busy === "install" ? "Installing..." : "Install Runtime"}
-        </button>
-        <button
-          className="secondary"
-          onClick={props.onRepair}
-          disabled={props.busy !== null || props.workflowLocked}
-        >
-          {props.busy === "repair" ? "Repairing..." : "Repair Runtime"}
-        </button>
-        <button
-          className="secondary"
-          onClick={props.onMedium}
-          disabled={props.busy !== null || props.workflowLocked}
-        >
-          {props.busy === "medium" ? "Installing..." : "Install Medium Model"}
-        </button>
-      </div>
-      <p className="note">
-        Required download is about 680 MB. The optional medium model adds about 1.43 GB.
-      </p>
-    </section>
-  );
-}
-
-function EventLogPanel(props: {
-  snapshot: LogSnapshot | null;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  const events = props.snapshot?.events ?? [];
-  const errorCount = events.filter((event) => event.level === "error").length;
-  const latestEvents = [...events].reverse();
-
-  function renderDetails(event: LogEvent) {
-    if (!event.details) return null;
-    return (
-      <dl>
-        {Object.entries(event.details).map(([key, value]) => (
-          <div key={key}>
-            <dt>{key}</dt>
-            <dd>{String(value)}</dd>
-          </div>
-        ))}
-      </dl>
-    );
+function mascotState(
+  ready: boolean,
+  job: TranscriptionJobStatus | null,
+  hasError: boolean
+): MascotState {
+  if (hasError || job?.state === "error" || job?.state === "stopped") return "error";
+  if (job?.state === "completed") return "completed";
+  if (job?.state === "paused") return "paused";
+  if (job && ["queued", "converting", "transcribing"].includes(job.state)) {
+    return "processing";
   }
-
-  return (
-    <section className="panel diagnostics-panel">
-      <button
-        className="diagnostics-toggle"
-        onClick={props.onToggle}
-        aria-expanded={props.expanded}
-      >
-        <span>
-          <span className="toggle-mark">{props.expanded ? "−" : "+"}</span>
-          Event log
-        </span>
-        <span className="log-summary">
-          {events.length} events
-          {errorCount > 0 && <strong>{errorCount} errors</strong>}
-        </span>
-      </button>
-
-      {props.expanded && (
-        <div className="diagnostics-body">
-          <p className="log-path">
-            Persistent log: <code>{props.snapshot?.logFilePath ?? "Loading..."}</code>
-          </p>
-          <div className="event-list" role="log" aria-label="Application event log">
-            {latestEvents.length === 0 && <p className="empty-log">No events recorded yet.</p>}
-            {latestEvents.map((event) => (
-              <article className={`log-event log-${event.level}`} key={event.id}>
-                <div className="log-event-heading">
-                  <time>{new Date(event.timestamp).toLocaleTimeString()}</time>
-                  <span className="log-level">{event.level}</span>
-                  <span className="log-source">{event.source}</span>
-                </div>
-                <p>{event.message}</p>
-                {renderDetails(event)}
-              </article>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
-  );
+  return ready ? "ready" : "setup";
 }
 
 export default function App() {
@@ -227,6 +95,9 @@ export default function App() {
     [status]
   );
   const mediumReady = status?.items.modelMedium?.status === "ready";
+  const jobRunning = Boolean(
+    job && ["queued", "converting", "transcribing"].includes(job.state)
+  );
 
   async function runRuntimeAction(
     action: Exclude<BusyAction, null>,
@@ -270,15 +141,19 @@ export default function App() {
       } else {
         setText("");
         setOutputFiles([]);
-        setJob(
-          await window.localStudio.transcribe.start({
-            inputPath: selection.path,
-            model,
-            language,
-            outputFormat: format,
-            cpuThreads
-          })
-        );
+        const next = await window.localStudio.transcribe.start({
+          inputPath: selection.path,
+          model,
+          language,
+          outputFormat: format,
+          cpuThreads
+        });
+        setJob(next);
+        if (next.result) {
+          setText(next.result.text);
+          setOutputFiles(next.result.outputFiles);
+        }
+        if (next.error) setError(next.error);
       }
     } catch (reason) {
       setError(friendlyError(reason));
@@ -306,179 +181,77 @@ export default function App() {
     }
   }
 
-  const jobRunning = Boolean(
-    job && ["queued", "converting", "transcribing"].includes(job.state)
+  const runtimePanel = (
+    <RuntimePanel
+      status={status}
+      busy={busy}
+      workflowLocked={Boolean(job?.canStop)}
+      ready={requiredReady}
+      onInstall={() =>
+        runRuntimeAction("install", () => window.localStudio.runtime.ensureRequired())
+      }
+      onRepair={() =>
+        runRuntimeAction("repair", () => window.localStudio.runtime.repair())
+      }
+      onMedium={() =>
+        runRuntimeAction("medium", () =>
+          window.localStudio.runtime.installItem("model-medium")
+        )
+      }
+    />
   );
-  const controlsLocked = !requiredReady || busy !== null || jobRunning;
+
+  const workspace = (
+    <TranscriptionWorkspace
+      requiredReady={requiredReady}
+      mediumReady={mediumReady}
+      busy={busy !== null}
+      selection={selection}
+      model={model}
+      language={language}
+      format={format}
+      cpuThreads={cpuThreads}
+      logicalCpuCount={logicalCpuCount}
+      job={job}
+      jobRunning={jobRunning}
+      text={text}
+      outputFiles={outputFiles}
+      onPickFile={pickFile}
+      onModelChange={setModel}
+      onLanguageChange={setLanguage}
+      onFormatChange={setFormat}
+      onCpuChange={setCpuThreads}
+      onStart={startOrResume}
+      onPause={pauseJob}
+      onStop={stopJob}
+    />
+  );
 
   return (
-    <main>
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Private, on-device transcription</p>
-          <h1>Local Whisper Studio</h1>
-          <p>Convert and transcribe audio locally. Files never leave this computer.</p>
-        </div>
-        <div className={`readiness ${requiredReady ? "ready" : ""}`}>
-          <span />
-          {requiredReady ? "Runtime ready" : "Setup required"}
-        </div>
-      </header>
-
+    <main className="app-shell">
+      <AppHeader
+        ready={requiredReady}
+        mascotState={mascotState(requiredReady, job, Boolean(error))}
+      />
       {error && (
         <div className="error-banner" role="alert">
           {error}
         </div>
       )}
-
-      <RuntimePanel
-        status={status}
-        busy={busy}
-        workflowLocked={Boolean(job?.canStop)}
-        onInstall={() =>
-          runRuntimeAction("install", () => window.localStudio.runtime.ensureRequired())
-        }
-        onRepair={() => runRuntimeAction("repair", () => window.localStudio.runtime.repair())}
-        onMedium={() =>
-          runRuntimeAction("medium", () =>
-            window.localStudio.runtime.installItem("model-medium")
-          )
-        }
-      />
-
-      <section className={`panel transcription-panel ${!requiredReady ? "disabled" : ""}`}>
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Audio workflow</p>
-            <h2>Transcribe a file</h2>
-          </div>
-        </div>
-
-        {!requiredReady && (
-          <div className="blocked-message">Install the required runtime to enable transcription.</div>
+      <div className="workflow-stack">
+        {requiredReady ? (
+          <>
+            {workspace}
+            {runtimePanel}
+          </>
+        ) : (
+          <>
+            {runtimePanel}
+            {workspace}
+          </>
         )}
-
-        <div className="file-picker">
-          <button
-            className="secondary"
-            onClick={pickFile}
-            disabled={!requiredReady || busy !== null || Boolean(job?.canStop)}
-          >
-            Choose audio file
-          </button>
-          <span>{selection?.name ?? "No file selected"}</span>
-        </div>
-
-        <div className="controls">
-          <label>
-            Model
-            <select
-              value={model}
-              onChange={(event) => setModel(event.target.value as "small" | "medium")}
-              disabled={controlsLocked || job?.state === "paused"}
-            >
-              <option value="small">Small</option>
-              <option value="medium" disabled={!mediumReady}>
-                Medium {!mediumReady ? "(not installed)" : ""}
-              </option>
-            </select>
-          </label>
-          <label>
-            Language
-            <select
-              value={language}
-              onChange={(event) => setLanguage(event.target.value as "vi" | "en" | "auto")}
-              disabled={controlsLocked || job?.state === "paused"}
-            >
-              <option value="vi">Vietnamese</option>
-              <option value="en">English</option>
-              <option value="auto">Auto detect</option>
-            </select>
-          </label>
-          <label>
-            Output
-            <select
-              value={format}
-              onChange={(event) => setFormat(event.target.value as "txt" | "json" | "srt")}
-              disabled={controlsLocked || job?.state === "paused"}
-            >
-              <option value="txt">Text</option>
-              <option value="json">JSON</option>
-              <option value="srt">Subtitles</option>
-            </select>
-          </label>
-          <label>
-            CPU usage
-            <select
-              value={cpuThreads}
-              onChange={(event) => setCpuThreads(Number(event.target.value))}
-              disabled={controlsLocked || job?.state === "paused"}
-            >
-              <option value={Math.max(1, Math.ceil(logicalCpuCount * 0.5))}>
-                Balanced ({Math.max(1, Math.ceil(logicalCpuCount * 0.5))} threads)
-              </option>
-              <option value={Math.max(1, Math.ceil(logicalCpuCount * 0.75))}>
-                High ({Math.max(1, Math.ceil(logicalCpuCount * 0.75))} threads)
-              </option>
-              <option value={logicalCpuCount}>Maximum ({logicalCpuCount} threads)</option>
-            </select>
-          </label>
-        </div>
-
-        <div className="job-progress" aria-label="Transcription progress">
-          <div className="job-progress-heading">
-            <span>{job?.phase ?? "Ready to start"}</span>
-            <strong>{job?.progress ?? 0}%</strong>
-          </div>
-          <div className={`job-progress-track ${jobRunning ? "active" : ""}`}>
-            <span style={{ width: `${job?.progress ?? 0}%` }} />
-          </div>
-          <span className={`job-state job-state-${job?.state ?? "idle"}`}>
-            {job?.state ?? "idle"}
-          </span>
-        </div>
-
-        <div className="job-controls">
-          <button
-            onClick={startOrResume}
-            disabled={
-              !requiredReady ||
-              !selection ||
-              busy !== null ||
-              jobRunning ||
-              (job !== null && !["paused", "completed", "stopped", "error"].includes(job.state))
-            }
-          >
-            Start
-          </button>
-          <button
-            className="secondary"
-            onClick={pauseJob}
-            disabled={!job?.canPause || busy !== null}
-          >
-            Pause
-          </button>
-          <button
-            className="danger"
-            onClick={stopJob}
-            disabled={!job?.canStop || busy !== null}
-          >
-            Stop
-          </button>
-        </div>
-
-        {(text || outputFiles.length > 0) && (
-          <div className="result">
-            <h3>Result</h3>
-            <pre>{text || "The transcript file was generated."}</pre>
-            {outputFiles.map((file) => (
-              <code key={file}>{file}</code>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <EventLogPanel
+      </div>
+      <DiagnosticsPanel
         snapshot={logSnapshot}
         expanded={logsExpanded}
         onToggle={() => {
