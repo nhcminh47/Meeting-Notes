@@ -22,6 +22,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Validate pull request title
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: pwsh
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          $pattern = '^(feat|fix|docs|chore|refactor|perf|test|build|ci|revert|style)(\([a-z0-9._/-]+\))?!?: .+$'
+          if ($env:PR_TITLE -notmatch $pattern) {
+            throw "Pull request title must use Conventional Commits, for example: feat: add transcript search"
+          }
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:

@@ -12,10 +12,11 @@ git switch -c codex/<short-description>
 
 Keep one development concern per branch and merge changes into `master` through a pull request.
 
-## Commit Messages
+## Pull Request Titles and Commit Messages
 
 Use Conventional Commits so Release Please can calculate the next version and generate release
-notes:
+notes. Pull request titles must follow this format because GitHub uses the title as the commit
+message when squash merging:
 
 - `fix: handle interrupted runtime downloads` creates a patch release.
 - `feat: add transcript search` creates a minor release.
@@ -41,8 +42,9 @@ GitHub Actions artifact.
 ## Releases
 
 Release Please maintains a release pull request from Conventional Commits merged into `master`.
-Merging that pull request updates the version and changelog, creates a `vX.Y.Z` tag and GitHub
-Release, and publishes the Windows installer with its SHA-256 checksum.
+Merging that pull request updates the version and changelog, creates a `vX.Y.Z` tag and draft
+GitHub Release, and starts the release build. The workflow publishes the release only after the
+Windows installer and its SHA-256 checksum upload successfully.
 
 The installer is currently unsigned, so Windows SmartScreen may display a warning.
 

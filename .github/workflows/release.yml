@@ -94,3 +94,10 @@ jobs:
             $installer.FullName `
             "$($installer.FullName).sha256" `
             --clobber
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.release_please.outputs.tag_name }}
+        run: gh release edit $env:RELEASE_TAG --draft=false --latest

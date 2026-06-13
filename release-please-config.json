@@ -6,6 +6,8 @@
       "release-type": "node",
       "package-name": "local-whisper-studio",
       "include-component-in-tag": false,
+      "draft": true,
+      "force-tag-creation": true,
       "changelog-path": "CHANGELOG.md"
     }
   }
