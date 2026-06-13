@@ -5,17 +5,17 @@ Windows x64 Electron desktop app for private, local audio transcription with FFm
 ## Development
 
 ```powershell
-npm.cmd install
-npm.cmd run dev
+pnpm install
+pnpm dev
 ```
 
 Useful checks:
 
 ```powershell
-npm.cmd run typecheck
-npm.cmd test
-npm.cmd run build
-npm.cmd run package:win
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm package:win
 ```
 
 Runtime binaries and models are not included in the installer. The app downloads pinned artifacts into Electron's `userData` directory only after the user clicks **Install Runtime**.

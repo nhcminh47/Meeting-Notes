@@ -5,13 +5,15 @@
   "main": "./out/main/index.js",
   "author": "Local Whisper Studio",
   "license": "MIT",
+  "packageManager": "pnpm@11.6.0",
   "scripts": {
+    "postinstall": "install-electron",
     "dev": "electron-vite dev",
-    "build": "npm run typecheck && electron-vite build",
+    "build": "pnpm run typecheck && electron-vite build",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
-    "package:win": "npm run build && electron-builder --win nsis"
+    "package:win": "pnpm run build && electron-builder --win nsis"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
