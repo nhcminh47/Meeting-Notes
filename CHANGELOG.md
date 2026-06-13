@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.2.1...v0.3.0) (2026-06-13)
+
+
+### Features
+
+* add cat anime atomic design system ([2bbb3e0](https://github.com/nhcminh47/Meeting-Notes/commit/2bbb3e0717bc0e598c401f3fc59121c0c34091fc))
+
 ## [0.2.1](https://github.com/nhcminh47/Meeting-Notes/compare/v0.2.0...v0.2.1) (2026-06-13)
 
 
