@@ -18,6 +18,13 @@ pnpm build
 pnpm package:win
 ```
 
+Development changes use scoped `codex/<short-description>` branches and are merged into `master`
+through pull requests. See [CONTRIBUTING.md](CONTRIBUTING.md) for branch, commit, CI, and release
+conventions.
+
+Releases use `vX.Y.Z` tags and include an unsigned Windows installer plus its SHA-256 checksum.
+Unsigned installers may trigger a Windows SmartScreen warning.
+
 Runtime binaries and models are not included in the installer. The app downloads pinned artifacts into Electron's `userData` directory only after the user clicks **Install Runtime**.
 
 The **Event log** panel at the bottom of the app is collapsed by default. It shows recent download, checksum, extraction, conversion, transcription, and process events while also writing rotating JSONL diagnostics to:
