@@ -106,6 +106,7 @@ async function runJob(job: InternalJob): Promise<void> {
       language: job.input.language,
       outputFormat: job.input.outputFormat,
       cpuThreads: job.input.cpuThreads,
+      debugMode: job.input.debugMode,
       outputPrefix: job.transcriptPrefix,
       signal: controller.signal,
       onProgress: (whisperProgress) => {
@@ -185,7 +186,8 @@ export function startTranscriptionJob(
     jobId,
     model: input.model ?? "small",
     language: input.language ?? "vi",
-    cpuThreads: input.cpuThreads ?? os.availableParallelism()
+    cpuThreads: input.cpuThreads ?? os.availableParallelism(),
+    debugMode: input.debugMode ?? false
   });
   beginRun(job);
   return publicStatus(job);

@@ -4,12 +4,21 @@ import { electronApp, is } from "@electron-toolkit/utils";
 import { registerIpcHandlers } from "./ipc";
 import { logEvent, setEventLogRoot } from "./eventLogger";
 
+function getAppIconPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, "app-paw.png")
+    : path.resolve(__dirname, "../../src/renderer/src/assets/icons/app-paw.png");
+}
+
 function createWindow(): void {
   const window = new BrowserWindow({
     width: 1180,
     height: 820,
     minWidth: 920,
     minHeight: 680,
+    frame: false,
+    icon: getAppIconPath(),
+    backgroundColor: "#fff6e8",
     show: false,
     autoHideMenuBar: true,
     webPreferences: {
@@ -20,6 +29,14 @@ function createWindow(): void {
     }
   });
 
+  const sendMaximizedState = () => {
+    if (!window.isDestroyed()) {
+      window.webContents.send("window:maximized-changed", window.isMaximized());
+    }
+  };
+
+  window.on("maximize", sendMaximizedState);
+  window.on("unmaximize", sendMaximizedState);
   window.once("ready-to-show", () => window.show());
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("https://")) void shell.openExternal(url);

@@ -1,7 +1,6 @@
 import type { RuntimeStatus } from "../../../../main/runtime/runtimeTypes";
 import { Button } from "../atoms/Button";
 import { RuntimeItem } from "../molecules/RuntimeItem";
-import { SectionHeading } from "../molecules/SectionHeading";
 
 export type BusyAction = "install" | "repair" | "medium" | null;
 
@@ -23,15 +22,10 @@ export function RuntimePanel(props: {
 }) {
   return (
     <section className={`panel runtime-panel ${props.ready ? "runtime-panel--ready" : ""}`}>
-      <SectionHeading
-        eyebrow="Local dependencies"
-        title="Runtime setup"
-        aside={
-          <span className="section-meta">
-            Manifest {props.status?.runtimeVersion ?? "..."}
-          </span>
-        }
-      />
+      <div className="runtime-panel__heading">
+        <span aria-hidden="true">⌁</span>
+        <h2>Runtime setup</h2>
+      </div>
       <div className="runtime-grid">
         {Object.entries(ITEMS).map(([key, item]) => (
           <RuntimeItem
@@ -65,7 +59,8 @@ export function RuntimePanel(props: {
         </Button>
       </div>
       <p className="note">
-        Required download is about 680 MB. The optional medium model adds about 1.43 GB.
+        Everything installs locally. The starter kit is about 680 MB; the optional
+        medium model adds about 1.43 GB.
       </p>
     </section>
   );

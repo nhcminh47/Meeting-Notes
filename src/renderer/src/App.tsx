@@ -12,7 +12,11 @@ import {
   type BusyAction
 } from "./components/organisms/RuntimePanel";
 import { TranscriptionWorkspace } from "./components/organisms/TranscriptionWorkspace";
+import { TranscriptResultPanel } from "./components/organisms/TranscriptResultPanel";
 import { DiagnosticsPanel } from "./components/organisms/DiagnosticsPanel";
+import { WindowTitlebar } from "./components/organisms/WindowTitlebar";
+import appPawIcon from "./assets/icons/app-paw.png";
+import studioHomeIcon from "./assets/icons/studio-home.png";
 
 function friendlyError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
@@ -48,6 +52,8 @@ export default function App() {
   const [job, setJob] = useState<TranscriptionJobStatus | null>(null);
   const [logSnapshot, setLogSnapshot] = useState<LogSnapshot | null>(null);
   const [logsExpanded, setLogsExpanded] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [windowMaximized, setWindowMaximized] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     setStatus(await window.localStudio.runtime.getStatus());
@@ -60,6 +66,23 @@ export default function App() {
     refreshStatus().catch((reason) => setError(friendlyError(reason)));
     refreshLogs().catch(() => undefined);
   }, [refreshLogs, refreshStatus]);
+
+  useEffect(() => {
+    let active = true;
+    window.localStudio.windowControls
+      .isMaximized()
+      .then((maximized) => {
+        if (active) setWindowMaximized(maximized);
+      })
+      .catch(() => undefined);
+    const unsubscribe = window.localStudio.windowControls.onMaximizedChange(
+      setWindowMaximized
+    );
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -146,7 +169,8 @@ export default function App() {
           model,
           language,
           outputFormat: format,
-          cpuThreads
+          cpuThreads,
+          debugMode
         });
         setJob(next);
         if (next.result) {
@@ -214,8 +238,6 @@ export default function App() {
       logicalCpuCount={logicalCpuCount}
       job={job}
       jobRunning={jobRunning}
-      text={text}
-      outputFiles={outputFiles}
       onPickFile={pickFile}
       onModelChange={setModel}
       onLanguageChange={setLanguage}
@@ -228,37 +250,85 @@ export default function App() {
   );
 
   return (
-    <main className="app-shell">
-      <AppHeader
-        ready={requiredReady}
-        mascotState={mascotState(requiredReady, job, Boolean(error))}
-      />
-      {error && (
-        <div className="error-banner" role="alert">
-          {error}
-        </div>
-      )}
-      <div className="workflow-stack">
-        {requiredReady ? (
-          <>
-            {workspace}
-            {runtimePanel}
-          </>
-        ) : (
-          <>
-            {runtimePanel}
-            {workspace}
-          </>
-        )}
-      </div>
-      <DiagnosticsPanel
-        snapshot={logSnapshot}
-        expanded={logsExpanded}
-        onToggle={() => {
-          setLogsExpanded((expanded) => !expanded);
-          refreshLogs().catch(() => undefined);
+    <div className="desktop-window">
+      <WindowTitlebar
+        maximized={windowMaximized}
+        onMinimize={() => {
+          window.localStudio.windowControls.minimize().catch(() => undefined);
+        }}
+        onToggleMaximize={() => {
+          window.localStudio.windowControls
+            .toggleMaximize()
+            .then(setWindowMaximized)
+            .catch(() => undefined);
+        }}
+        onClose={() => {
+          window.localStudio.windowControls.close().catch(() => undefined);
         }}
       />
-    </main>
+      <div className="desktop-layout">
+        <aside className="studio-nav" aria-label="Studio navigation">
+          <div className="studio-nav__brand" aria-hidden="true">
+            <img src={appPawIcon} alt="" />
+          </div>
+          <nav>
+            <button
+              className="studio-nav__item studio-nav__item--active"
+              type="button"
+              aria-current="page"
+            >
+              <img src={studioHomeIcon} alt="" />
+              <span>Studio</span>
+            </button>
+          </nav>
+          <div className="studio-nav__local">
+            <span className="paw-mark paw-mark--small" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+              <b />
+            </span>
+            Local
+            <strong>First ♥</strong>
+          </div>
+        </aside>
+        <main className="app-shell">
+          <AppHeader
+            ready={requiredReady}
+            mascotState={mascotState(requiredReady, job, Boolean(error))}
+          />
+          {error && (
+            <div className="error-banner" role="alert">
+              {error}
+            </div>
+          )}
+          <div className="workflow-stack">
+            {workspace}
+            {runtimePanel}
+          </div>
+          {(text || outputFiles.length > 0) && (
+            <TranscriptResultPanel
+              key={job?.jobId ?? outputFiles[0] ?? "transcript-result"}
+              jobId={job?.jobId ?? "transcript-result"}
+              text={text}
+              outputFiles={outputFiles}
+              format={format}
+              selectedFileName={selection?.name}
+            />
+          )}
+          <DiagnosticsPanel
+            snapshot={logSnapshot}
+            expanded={logsExpanded}
+            debugMode={debugMode}
+            onDebugModeChange={setDebugMode}
+            onToggle={() => {
+              setLogsExpanded((expanded) => !expanded);
+              refreshLogs().catch(() => undefined);
+            }}
+          />
+        </main>
+      </div>
+    </div>
   );
 }

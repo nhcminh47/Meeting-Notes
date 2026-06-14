@@ -2,6 +2,19 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { LocalStudioApi } from "../shared/apiTypes";
 
 const api: LocalStudioApi = {
+  windowControls: {
+    minimize: () => ipcRenderer.invoke("window:minimize"),
+    toggleMaximize: () => ipcRenderer.invoke("window:toggle-maximize"),
+    isMaximized: () => ipcRenderer.invoke("window:is-maximized"),
+    close: () => ipcRenderer.invoke("window:close"),
+    onMaximizedChange: (listener) => {
+      const handler = (_event: Electron.IpcRendererEvent, maximized: boolean) => {
+        listener(maximized);
+      };
+      ipcRenderer.on("window:maximized-changed", handler);
+      return () => ipcRenderer.removeListener("window:maximized-changed", handler);
+    }
+  },
   runtime: {
     getStatus: () => ipcRenderer.invoke("runtime:get-status"),
     ensureRequired: () => ipcRenderer.invoke("runtime:ensure-required"),

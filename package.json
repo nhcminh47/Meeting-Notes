@@ -9,6 +9,7 @@
   "scripts": {
     "postinstall": "install-electron",
     "dev": "electron-vite dev",
+    "dev:web": "vite --config vite.web.config.ts",
     "build": "pnpm run typecheck && electron-vite build",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
@@ -50,8 +51,15 @@
       "package.json",
       "THIRD_PARTY_NOTICES.md"
     ],
+    "extraResources": [
+      {
+        "from": "src/renderer/src/assets/icons/app-paw.png",
+        "to": "app-paw.png"
+      }
+    ],
     "asar": true,
     "win": {
+      "icon": "src/renderer/src/assets/icons/app-paw.png",
       "target": "nsis"
     },
     "nsis": {

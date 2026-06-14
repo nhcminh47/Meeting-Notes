@@ -41,6 +41,7 @@ export type StartTranscriptionJobInput = {
   language?: "vi" | "en" | "auto";
   outputFormat?: "txt" | "json" | "srt";
   cpuThreads?: number;
+  debugMode?: boolean;
 };
 
 export type TranscriptionJobStatus = {
@@ -70,6 +71,13 @@ export type LogSnapshot = {
 };
 
 export type LocalStudioApi = {
+  windowControls: {
+    minimize: () => Promise<void>;
+    toggleMaximize: () => Promise<boolean>;
+    isMaximized: () => Promise<boolean>;
+    close: () => Promise<void>;
+    onMaximizedChange: (listener: (maximized: boolean) => void) => () => void;
+  };
   runtime: {
     getStatus: () => Promise<RuntimeStatus>;
     ensureRequired: () => Promise<RuntimeStatus>;

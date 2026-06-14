@@ -16,7 +16,12 @@ export function ProgressBar(props: {
       aria-valuemax={100}
       aria-valuenow={value}
     >
-      <span style={{ width: `${value}%` }} />
+      <span className="progress-bar__fill" style={{ width: `${value}%` }} />
+      {!props.compact && (
+        <span className="progress-bar__wave" aria-hidden="true">
+          {Array.from({ length: 32 }, (_, index) => <i key={index} />)}
+        </span>
+      )}
     </div>
   );
 }

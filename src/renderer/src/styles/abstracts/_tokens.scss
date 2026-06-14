@@ -1,23 +1,28 @@
 $colors: (
-  background: #111014,
-  surface: #1b181d,
-  surface-raised: #242027,
-  surface-soft: #17151a,
-  surface-strong: #0d0c0f,
-  text: #fff8ef,
-  text-muted: #b9acaa,
-  text-subtle: #8e8283,
-  border: #3a323a,
-  border-strong: #554550,
-  primary: #f2a66f,
-  primary-hover: #ffc08f,
-  primary-contrast: #27140b,
-  accent: #e7c4db,
-  success: #8bd4b0,
-  warning: #efc879,
-  danger: #ef8f9d,
-  info: #8ec8e8,
-  focus: #ffd4a8
+  bg: #fff6e8,
+  bg-soft: #ffe9cf,
+  bg-warm: #ffd9b0,
+  panel: rgb(255 250 241 / 0.9),
+  panel-strong: #fffaf2,
+  panel-warm: #ffe3c2,
+  border: rgb(126 72 38 / 0.18),
+  border-strong: rgb(126 72 38 / 0.34),
+  text: #3b2418,
+  muted: #8a6755,
+  subtle: #a9816b,
+  accent: #f58b4c,
+  accent-2: #ffb36b,
+  accent-3: #ffcf8a,
+  "coral": #e96676,
+  ready: #278c70,
+  processing: #b66714,
+  paused: #617ad2,
+  error: #c94f50,
+  outline-cat: #5a2f1e,
+  cat-orange: #f49a5b,
+  cat-stripe: #d66f3f,
+  cat-cream: #fff2df,
+  focus: #d95f2d
 );
 
 $spacing: (
@@ -33,11 +38,11 @@ $spacing: (
 );
 
 $radii: (
-  sm: 0.5rem,
-  md: 0.75rem,
+  sm: 0.625rem,
+  md: 0.875rem,
   lg: 1.125rem,
-  xl: 1.5rem,
-  pill: 999px
+  xl: 1.75rem,
+  pill: 20px
 );
 
 :root {
@@ -51,12 +56,40 @@ $radii: (
     --radius-#{$name}: #{$value};
   }
 
-  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  --font-display: "Segoe UI Variable Display", "Segoe UI", var(--font-body);
-  --font-mono: Consolas, "Courier New", monospace;
-  --shadow-panel: 0 24px 70px rgb(0 0 0 / 0.28);
-  --shadow-warm: 0 16px 50px rgb(100 55 35 / 0.18);
+  // Required public design tokens.
+  --color-bg: #fff6e8;
+  --color-panel: rgb(255 250 241 / 0.9);
+  --color-panel-strong: #fffaf2;
+  --color-accent: #f58b4c;
+  --color-accent-2: #ffb36b;
+  --color-text: #3b2418;
+  --color-muted: #8a6755;
+  --radius-xl: 1.75rem;
+  --shadow-soft: 0 20px 60px rgb(126 72 38 / 0.16);
+
+  // Compatibility aliases for existing component semantics.
+  --color-background: var(--color-bg);
+  --color-surface: var(--color-panel);
+  --color-surface-raised: var(--color-panel-warm);
+  --color-surface-soft: #fff4e4;
+  --color-surface-strong: #4a2d23;
+  --color-text-muted: var(--color-muted);
+  --color-text-subtle: var(--color-subtle);
+  --color-primary: var(--color-accent);
+  --color-primary-hover: #e9783c;
+  --color-primary-contrast: #341b10;
+  --color-success: var(--color-ready);
+  --color-warning: var(--color-processing);
+  --color-danger: var(--color-error);
+  --color-info: var(--color-paused);
+
+  --font-body: "Segoe UI Variable Text", "Aptos", "Segoe UI", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Aptos Display", "Segoe UI",
+    var(--font-body);
+  --font-mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+  --shadow-panel: var(--shadow-soft);
+  --shadow-warm: 0 16px 48px rgb(245 139 76 / 0.22);
   --motion-fast: 120ms;
   --motion-normal: 220ms;
   --motion-slow: 360ms;

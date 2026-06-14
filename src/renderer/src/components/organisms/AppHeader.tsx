@@ -1,24 +1,33 @@
 import { Badge } from "../atoms/Badge";
-import { CatMascot, type MascotState } from "../atoms/CatMascot";
+import type { MascotState } from "../atoms/CatMascot";
+import headerStudio from "../../assets/orange-tabby-header-background.png";
 
 export function AppHeader(props: {
   ready: boolean;
   mascotState: MascotState;
 }) {
   return (
-    <header className="app-header">
+    <header
+      className="app-header"
+      data-state={props.mascotState}
+      style={{ backgroundImage: `url("${headerStudio}")` }}
+    >
       <div className="app-header__copy">
-        <p className="eyebrow">Private, on-device transcription</p>
         <h1>Local Whisper Studio</h1>
-        <p>Convert and transcribe audio locally. Files never leave this computer.</p>
-        <Badge variant={props.ready ? "ready" : "warning"} className="readiness">
-          <span className="readiness__dot" />
-          {props.ready ? "Runtime ready" : "Setup required"}
-        </Badge>
-      </div>
-      <div className="app-header__assistant">
-        <CatMascot state={props.mascotState} />
-        <p>{props.ready ? "Ready when you are." : "Let’s prepare the studio."}</p>
+        <p className="app-header__qualities">Private <span>•</span> Local <span>•</span> Secure</p>
+        <p className="app-header__lede">
+          Your audio never leaves this computer.
+        </p>
+        <div className="hero-status">
+          <Badge variant={props.ready ? "ready" : "warning"} className="readiness">
+            <span className="readiness__dot" />
+            {props.ready ? "Neko engine ready" : "Studio setup required"}
+          </Badge>
+          <span className="privacy-pill">
+            <span aria-hidden="true">⌂</span>
+            Local-only mode
+          </span>
+        </div>
       </div>
     </header>
   );
