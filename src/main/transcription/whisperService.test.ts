@@ -32,6 +32,26 @@ import { transcribeAudioFile } from "./whisperService";
 
 let root: string;
 
+function wavWithDuration(seconds: number): Buffer {
+  const sampleRate = 16_000;
+  const dataSize = sampleRate * 2 * seconds;
+  const buffer = Buffer.alloc(44 + dataSize);
+  buffer.write("RIFF", 0);
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write("WAVE", 8);
+  buffer.write("fmt ", 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write("data", 36);
+  buffer.writeUInt32LE(dataSize, 40);
+  return buffer;
+}
+
 beforeEach(async () => {
   root = await mkdtemp(path.join(os.tmpdir(), "whisper-service-test-"));
   paths.whisper = path.join(root, "whisper-cli.exe");
@@ -62,7 +82,7 @@ describe("transcribeAudioFile", () => {
       options.onStderr?.("whisper_print_progress_callback: progress = 42%\n");
       await mkdir(paths.workRoot, { recursive: true });
       await writeFile(path.join(paths.workRoot, "transcript.txt"), "Xin chao");
-      return { stdout: "", stderr: "" };
+      return { stdout: "", stderr: "", exitCode: 0, durationMs: 10 };
     });
 
     const progress = vi.fn();
@@ -79,6 +99,16 @@ describe("transcribeAudioFile", () => {
         "vi",
         "-t",
         "8",
+        "-nth",
+        "0.6",
+        "-lpt",
+        "-1",
+        "-et",
+        "2.4",
+        "-tp",
+        "0",
+        "-tpi",
+        "0.2",
         "-pp",
         "-of",
         path.join(paths.workRoot, "transcript"),
@@ -87,6 +117,66 @@ describe("transcribeAudioFile", () => {
       expect.objectContaining({ cwd: root })
     );
     expect(progress).toHaveBeenCalledWith(42);
+  });
+
+  it.each([
+    ["auto", "auto"],
+    ["en", "en"],
+    ["vi", "vi"]
+  ] as const)("maps UI language %s to whisper language %s", async (language, expected) => {
+    const audioPath = path.join(root, `${language}.wav`);
+    await writeFile(audioPath, "wav");
+    runProcess.mockImplementation(async (
+      _executable: string,
+      args: string[]
+    ) => {
+      await mkdir(paths.workRoot, { recursive: true });
+      await writeFile(path.join(paths.workRoot, "transcript.txt"), "Transcript");
+      expect(args.slice(args.indexOf("-l"), args.indexOf("-l") + 2)).toEqual([
+        "-l",
+        expected
+      ]);
+      expect(args).not.toContain("-tr");
+      expect(args).not.toContain("--prompt");
+      return { stdout: "", stderr: "", exitCode: 0, durationMs: 10 };
+    });
+
+    await transcribeAudioFile({ audioPath, language });
+    expect(runProcess).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a suspiciously short English result without changing language", async () => {
+    const audioPath = path.join(root, "short-english.wav");
+    await writeFile(audioPath, wavWithDuration(20));
+    runProcess
+      .mockImplementationOnce(async (_executable: string, args: string[]) => {
+        await mkdir(paths.workRoot, { recursive: true });
+        await writeFile(path.join(paths.workRoot, "transcript.txt"), "Hi.");
+        expect(args.slice(args.indexOf("-l"), args.indexOf("-l") + 2)).toEqual(["-l", "en"]);
+        expect(args.slice(args.indexOf("-nth"), args.indexOf("-nth") + 2)).toEqual([
+          "-nth",
+          "0.6"
+        ]);
+        return { stdout: "", stderr: "", exitCode: 0, durationMs: 10 };
+      })
+      .mockImplementationOnce(async (_executable: string, args: string[]) => {
+        await writeFile(
+          path.join(paths.workRoot, "transcript.txt"),
+          "Hi. This is the recovered continuation."
+        );
+        expect(args.slice(args.indexOf("-l"), args.indexOf("-l") + 2)).toEqual(["-l", "en"]);
+        expect(args.slice(args.indexOf("-nth"), args.indexOf("-nth") + 2)).toEqual([
+          "-nth",
+          "0.8"
+        ]);
+        expect(args).not.toContain("-tr");
+        return { stdout: "", stderr: "", exitCode: 0, durationMs: 12 };
+      });
+
+    const result = await transcribeAudioFile({ audioPath, language: "en" });
+
+    expect(runProcess).toHaveBeenCalledTimes(2);
+    expect(result.text).toContain("recovered continuation");
   });
 
   it("requires the optional medium model before spawning", async () => {

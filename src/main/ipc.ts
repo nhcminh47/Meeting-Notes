@@ -1,4 +1,5 @@
-import { dialog, ipcMain } from "electron";
+import { BrowserWindow, dialog, ipcMain } from "electron";
+import type { IpcMainInvokeEvent } from "electron";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { stat } from "node:fs/promises";
@@ -44,7 +45,8 @@ export const startTranscriptionJobSchema = z.object({
   model: z.enum(["small", "medium"]).optional(),
   language: z.enum(["vi", "en", "auto"]).optional(),
   outputFormat: z.enum(["txt", "json", "srt"]).optional(),
-  cpuThreads: z.number().int().min(1).max(64).optional()
+  cpuThreads: z.number().int().min(1).max(64).optional(),
+  debugMode: z.boolean().optional()
 });
 export const jobIdSchema = z.string().uuid();
 
@@ -74,7 +76,29 @@ async function assertAudioPath(filePath: string): Promise<void> {
   }
 }
 
+function getSenderWindow(event: IpcMainInvokeEvent): BrowserWindow {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (!window) throw new Error("The application window is no longer available.");
+  return window;
+}
+
 export function registerIpcHandlers(): void {
+  ipcMain.handle("window:minimize", (event) => {
+    getSenderWindow(event).minimize();
+  });
+  ipcMain.handle("window:toggle-maximize", (event) => {
+    const window = getSenderWindow(event);
+    if (window.isMaximized()) window.unmaximize();
+    else window.maximize();
+    return window.isMaximized();
+  });
+  ipcMain.handle("window:is-maximized", (event) => {
+    return getSenderWindow(event).isMaximized();
+  });
+  ipcMain.handle("window:close", (event) => {
+    getSenderWindow(event).close();
+  });
+
   ipcMain.handle("diagnostics:get-events", async () => getLogSnapshot());
   ipcMain.handle("runtime:get-status", async () => getRuntimeStatus());
   ipcMain.handle("runtime:ensure-required", async () => ensureRequiredRuntime());

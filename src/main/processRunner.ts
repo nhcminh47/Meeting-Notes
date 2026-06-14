@@ -11,7 +11,7 @@ export async function runProcess(
     onStdout?: (text: string) => void;
     onStderr?: (text: string) => void;
   }
-): Promise<{ stdout: string; stderr: string }> {
+): Promise<{ stdout: string; stderr: string; exitCode: number; durationMs: number }> {
   return new Promise((resolve, reject) => {
     const startedAt = Date.now();
     const processName = path.basename(executable);
@@ -60,11 +60,13 @@ export async function runProcess(
         return;
       }
       if (code === 0) {
+        const durationMs = Date.now() - startedAt;
         logEvent("info", "process", "Child process completed.", {
           processName,
-          durationMs: Date.now() - startedAt
+          exitCode: code,
+          durationMs
         });
-        resolve({ stdout, stderr });
+        resolve({ stdout, stderr, exitCode: code, durationMs });
       } else {
         const error = new Error(
           `Process exited with code ${code ?? "unknown"}: ${stderr.trim() || stdout.trim()}`

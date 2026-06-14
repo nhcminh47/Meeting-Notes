@@ -4,6 +4,9 @@ import type {
 } from "../../../../main/runtime/runtimeTypes";
 import { Badge, type SemanticVariant } from "../atoms/Badge";
 import { ProgressBar } from "../atoms/ProgressBar";
+import featherIcon from "../../assets/icons/feather.png";
+import successIcon from "../../assets/icons/status-success.png";
+import warningIcon from "../../assets/icons/status-warning.png";
 
 function statusVariant(status: RuntimeItemStatus): SemanticVariant {
   if (status === "ready") return "ready";
@@ -21,8 +24,20 @@ export function RuntimeItem(props: {
   const processing = status === "downloading" || status === "extracting";
 
   return (
-    <article className="runtime-item">
-      <div>
+    <article className={`runtime-item runtime-item--${status}`}>
+      <span className="runtime-item__icon" aria-hidden="true">
+        <img
+          src={
+            status === "ready"
+              ? successIcon
+              : status === "error"
+                ? warningIcon
+                : featherIcon
+          }
+          alt=""
+        />
+      </span>
+      <div className="runtime-item__copy">
         <strong>{props.label}</strong>
         <small>{props.size} download</small>
       </div>

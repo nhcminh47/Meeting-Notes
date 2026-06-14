@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import type { RuntimeStatus } from "../../main/runtime/runtimeTypes";
@@ -37,6 +37,13 @@ function jobWith(
 
 beforeEach(() => {
   window.localStudio = {
+    windowControls: {
+      minimize: vi.fn(async () => undefined),
+      toggleMaximize: vi.fn(async () => true),
+      isMaximized: vi.fn(async () => false),
+      close: vi.fn(async () => undefined),
+      onMaximizedChange: vi.fn(() => () => undefined)
+    },
     runtime: {
       getStatus: vi.fn(async () => statusWith("missing")),
       ensureRequired: vi.fn(),
@@ -64,37 +71,65 @@ beforeEach(() => {
 });
 
 describe("App", () => {
+  it("exposes the active Studio destination as accessible navigation", async () => {
+    render(<App />);
+
+    await screen.findByText("Studio setup required");
+    expect(screen.getByLabelText("Studio navigation")).toBeVisible();
+    const studio = screen.getByRole("button", { name: "Studio" });
+    expect(studio).toBeEnabled();
+    expect(studio).toHaveAttribute("aria-current", "page");
+  });
+
+  it("routes custom titlebar controls through the preload bridge", async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Minimize window" }));
+    fireEvent.click(screen.getByRole("button", { name: "Maximize window" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close window" }));
+
+    expect(window.localStudio.windowControls.minimize).toHaveBeenCalledOnce();
+    expect(window.localStudio.windowControls.toggleMaximize).toHaveBeenCalledOnce();
+    expect(window.localStudio.windowControls.close).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Restore window" })).toBeVisible()
+    );
+  });
+
   it("shows missing runtime and blocks transcription", async () => {
     render(<App />);
     await waitFor(() => expect(screen.getAllByText("missing")).toHaveLength(4));
-    expect(screen.getByText("Setup required")).toBeVisible();
+    expect(screen.getByText("Studio setup required")).toBeVisible();
     expect(screen.getByText("Install the required runtime to enable transcription.")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Start transcription" })).toBeDisabled();
   });
 
   it("enables file selection once required runtime is ready", async () => {
     window.localStudio.runtime.getStatus = vi.fn(async () => statusWith("ready"));
     render(<App />);
-    await screen.findByText("Runtime ready");
-    const button = screen.getByRole("button", { name: "Choose audio file" });
+    await screen.findByText("Neko engine ready");
+    const button = screen.getByRole("button", { name: "Browse files" });
     expect(button).toBeEnabled();
-    expect(screen.getByText("Runtime ready")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
+    expect(screen.getByText("Neko engine ready")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Start transcription" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Pause" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Stop" })).toBeDisabled();
     expect(screen.getByLabelText("Transcription progress")).toHaveTextContent("0%");
-    expect(screen.getByRole("combobox", { name: "CPU usage" })).toHaveValue(
-      String(navigator.hardwareConcurrency || 4)
+    expect(screen.getByRole("button", { name: /CPU Threads/ })).toHaveTextContent(
+      `Auto (${navigator.hardwareConcurrency || 4})`
     );
   });
 
-  it("keeps the event log collapsed until requested", async () => {
+  it("keeps the studio event log collapsed until requested", async () => {
     render(<App />);
-    const toggle = await screen.findByRole("button", { name: /Event log/i });
+    const toggle = await screen.findByRole("button", { name: /Studio event log/i });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("log")).not.toBeInTheDocument();
-    fireEvent.click(toggle);
-    expect(await screen.findByRole("log")).toBeVisible();
+    await act(async () => {
+      fireEvent.click(toggle);
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("log")).toBeVisible();
   });
 
   it("shows processing state after starting a selected file", async () => {
@@ -108,11 +143,11 @@ describe("App", () => {
     window.localStudio.transcribe.getStatus = vi.fn(async () => processingJob);
 
     render(<App />);
-    await screen.findByText("Runtime ready");
-    const chooseButton = screen.getByRole("button", { name: "Choose audio file" });
+    await screen.findByText("Neko engine ready");
+    const chooseButton = screen.getByRole("button", { name: "Browse files" });
     fireEvent.click(chooseButton);
-    expect(await screen.findByText("meeting.wav")).toBeVisible();
-    const startButton = screen.getByRole("button", { name: "Start" });
+    expect((await screen.findAllByText("meeting.wav"))[0]).toBeVisible();
+    const startButton = screen.getByRole("button", { name: "Start transcription" });
     await waitFor(() => expect(startButton).toBeEnabled());
     fireEvent.click(startButton);
 
@@ -130,11 +165,11 @@ describe("App", () => {
     window.localStudio.transcribe.start = vi.fn(async () => jobWith("paused"));
 
     render(<App />);
-    await screen.findByText("Runtime ready");
-    const chooseButton = screen.getByRole("button", { name: "Choose audio file" });
+    await screen.findByText("Neko engine ready");
+    const chooseButton = screen.getByRole("button", { name: "Browse files" });
     fireEvent.click(chooseButton);
-    expect(await screen.findByText("meeting.wav")).toBeVisible();
-    const startButton = screen.getByRole("button", { name: "Start" });
+    expect((await screen.findAllByText("meeting.wav"))[0]).toBeVisible();
+    const startButton = screen.getByRole("button", { name: "Start transcription" });
     await waitFor(() => expect(startButton).toBeEnabled());
     fireEvent.click(startButton);
 
@@ -158,15 +193,33 @@ describe("App", () => {
     );
 
     render(<App />);
-    await screen.findByText("Runtime ready");
-    const chooseButton = screen.getByRole("button", { name: "Choose audio file" });
+    await screen.findByText("Neko engine ready");
+    const chooseButton = screen.getByRole("button", { name: "Browse files" });
     fireEvent.click(chooseButton);
-    expect(await screen.findByText("meeting.wav")).toBeVisible();
-    const startButton = screen.getByRole("button", { name: "Start" });
+    expect((await screen.findAllByText("meeting.wav"))[0]).toBeVisible();
+    const startButton = screen.getByRole("button", { name: "Start transcription" });
     await waitFor(() => expect(startButton).toBeEnabled());
     fireEvent.click(startButton);
 
     expect(await screen.findByText("completed")).toBeVisible();
+    const resultToggle = screen.getByRole("button", { name: /Transcript result/i });
+    expect(resultToggle).toHaveAttribute("aria-expanded", "false");
+    expect(resultToggle).toHaveTextContent("meeting.txt");
+    const resultPanel = resultToggle.closest<HTMLElement>(".transcript-result");
+    const workspace = document.querySelector<HTMLElement>(".transcription-workspace");
+    const diagnostics = document.querySelector(".diagnostics-panel");
+    expect(resultPanel).not.toBeNull();
+    expect(workspace).not.toContainElement(resultPanel);
+    expect(
+      Boolean(
+        resultPanel &&
+          diagnostics &&
+          (resultPanel.compareDocumentPosition(diagnostics) &
+            Node.DOCUMENT_POSITION_FOLLOWING)
+      )
+    ).toBe(true);
+    expect(screen.queryByText("Local transcript")).not.toBeInTheDocument();
+    fireEvent.click(resultToggle);
     expect(screen.getByText("Local transcript")).toBeVisible();
     expect(screen.getByText("C:\\output\\meeting.txt")).toBeVisible();
   });

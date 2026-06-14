@@ -1,13 +1,38 @@
 import { describe, expect, it, vi } from "vitest";
 
+const electronMocks = vi.hoisted(() => {
+  const handlers = new Map<string, (...args: any[]) => any>();
+  let maximized = false;
+  const targetWindow = {
+    minimize: vi.fn(),
+    maximize: vi.fn(() => {
+      maximized = true;
+    }),
+    unmaximize: vi.fn(() => {
+      maximized = false;
+    }),
+    isMaximized: vi.fn(() => maximized),
+    close: vi.fn()
+  };
+  return { handlers, targetWindow };
+});
+
 vi.mock("electron", () => ({
+  BrowserWindow: {
+    fromWebContents: vi.fn(() => electronMocks.targetWindow)
+  },
   dialog: {},
-  ipcMain: { handle: vi.fn() }
+  ipcMain: {
+    handle: vi.fn((channel: string, handler: (...args: any[]) => any) => {
+      electronMocks.handlers.set(channel, handler);
+    })
+  }
 }));
 
 import {
   convertAudioSchema,
   jobIdSchema,
+  registerIpcHandlers,
   runtimeItemSchema,
   startTranscriptionJobSchema,
   transcribeAudioSchema
@@ -49,5 +74,21 @@ describe("IPC schemas", () => {
     ).toThrow();
     expect(jobIdSchema.parse("7b60f0c8-a244-4cc3-8748-46a5ea79f341")).toBeTruthy();
     expect(() => jobIdSchema.parse("../../job")).toThrow();
+  });
+
+  it("scopes native window controls to the sending BrowserWindow", () => {
+    registerIpcHandlers();
+    const event = { sender: {} };
+
+    electronMocks.handlers.get("window:minimize")!(event);
+    expect(electronMocks.targetWindow.minimize).toHaveBeenCalledOnce();
+
+    expect(electronMocks.handlers.get("window:toggle-maximize")!(event)).toBe(true);
+    expect(electronMocks.targetWindow.maximize).toHaveBeenCalledOnce();
+    expect(electronMocks.handlers.get("window:toggle-maximize")!(event)).toBe(false);
+    expect(electronMocks.targetWindow.unmaximize).toHaveBeenCalledOnce();
+
+    electronMocks.handlers.get("window:close")!(event);
+    expect(electronMocks.targetWindow.close).toHaveBeenCalledOnce();
   });
 });
