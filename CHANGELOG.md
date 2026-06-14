@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.3.0...v0.4.0) (2026-06-14)
+
+
+### Features
+
+* add transcription diagnostics and refresh studio UI ([#7](https://github.com/nhcminh47/Meeting-Notes/issues/7)) ([8dc73c6](https://github.com/nhcminh47/Meeting-Notes/commit/8dc73c68e72b07bc4296e24e9a0fc737a56519c9))
+
 ## [0.3.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.2.1...v0.3.0) (2026-06-13)
 
 
