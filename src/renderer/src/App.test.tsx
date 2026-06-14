@@ -105,6 +105,7 @@ describe("App", () => {
   });
 
   it("enables file selection once required runtime is ready", async () => {
+    vi.spyOn(navigator, "hardwareConcurrency", "get").mockReturnValue(2);
     window.localStudio.runtime.getStatus = vi.fn(async () => statusWith("ready"));
     render(<App />);
     await screen.findByText("Neko engine ready");
@@ -116,7 +117,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Stop" })).toBeDisabled();
     expect(screen.getByLabelText("Transcription progress")).toHaveTextContent("0%");
     expect(screen.getByRole("button", { name: /CPU Threads/ })).toHaveTextContent(
-      `Auto (${navigator.hardwareConcurrency || 4})`
+      "Auto (2)"
     );
   });
 

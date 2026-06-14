@@ -83,6 +83,14 @@ export function TranscriptionWorkspace(props: {
   const paused = props.job?.state === "paused";
   const balancedCpuCount = Math.max(1, Math.ceil(props.logicalCpuCount * 0.5));
   const highCpuCount = Math.max(1, Math.ceil(props.logicalCpuCount * 0.75));
+  const cpuOptions = [
+    { value: props.logicalCpuCount, label: `Auto (${props.logicalCpuCount})` },
+    { value: highCpuCount, label: `High (${highCpuCount})` },
+    { value: balancedCpuCount, label: `Balanced (${balancedCpuCount})` }
+  ].filter(
+    (option, index, options) =>
+      options.findIndex((candidate) => candidate.value === option.value) === index
+  ).reverse();
 
   return (
     <section
@@ -144,17 +152,7 @@ export function TranscriptionWorkspace(props: {
           label="CPU Threads"
           Icon={CpuIcon}
           value={props.cpuThreads}
-          options={[
-            {
-              value: balancedCpuCount,
-              label: `Balanced (${balancedCpuCount})`
-            },
-            {
-              value: highCpuCount,
-              label: `High (${highCpuCount})`
-            },
-            { value: props.logicalCpuCount, label: `Auto (${props.logicalCpuCount})` }
-          ]}
+          options={cpuOptions}
           onChange={(value) => props.onCpuChange(Number(value))}
           disabled={controlsLocked || paused}
         />
