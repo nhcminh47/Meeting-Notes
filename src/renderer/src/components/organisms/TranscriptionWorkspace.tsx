@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
 import type {
   AudioFileSelection,
+  RecordingState,
   TranscriptionJobStatus
 } from "../../../../shared/apiTypes";
 import { Button } from "../atoms/Button";
 import { SelectField } from "../atoms/SelectField";
 import { FilePicker } from "../molecules/FilePicker";
 import { JobStatus } from "../molecules/JobStatus";
+import { AudioRecorder } from "./AudioRecorder";
 import musicNoteIcon from "../../assets/icons/music-note.png";
 
 function ControlIcon(props: {
@@ -70,7 +72,11 @@ export function TranscriptionWorkspace(props: {
   logicalCpuCount: number;
   job: TranscriptionJobStatus | null;
   jobRunning: boolean;
+  recordingState: RecordingState;
   onPickFile: () => void;
+  onRecordingStateChange: (state: RecordingState) => void;
+  onTranscribeRecording: (selection: AudioFileSelection) => Promise<void>;
+  onLogsChanged: () => void;
   onModelChange: (value: "small" | "medium") => void;
   onLanguageChange: (value: "vi" | "en" | "auto") => void;
   onFormatChange: (value: "txt" | "json" | "srt") => void;
@@ -79,7 +85,9 @@ export function TranscriptionWorkspace(props: {
   onPause: () => void;
   onStop: () => void;
 }) {
-  const controlsLocked = !props.requiredReady || props.busy || props.jobRunning;
+  const recordingBusy = !["idle", "error"].includes(props.recordingState);
+  const controlsLocked =
+    !props.requiredReady || props.busy || props.jobRunning || recordingBusy;
   const paused = props.job?.state === "paused";
   const balancedCpuCount = Math.max(1, Math.ceil(props.logicalCpuCount * 0.5));
   const highCpuCount = Math.max(1, Math.ceil(props.logicalCpuCount * 0.75));
@@ -105,8 +113,20 @@ export function TranscriptionWorkspace(props: {
       )}
       <FilePicker
         fileName={props.selection?.name}
-        disabled={!props.requiredReady || props.busy || Boolean(props.job?.canStop)}
+        disabled={
+          !props.requiredReady ||
+          props.busy ||
+          Boolean(props.job?.canStop) ||
+          recordingBusy
+        }
         onPick={props.onPickFile}
+      />
+      <AudioRecorder
+        disabled={!props.requiredReady || props.busy || Boolean(props.job?.canStop)}
+        transcriptionState={props.job?.state}
+        onStateChange={props.onRecordingStateChange}
+        onTranscribe={props.onTranscribeRecording}
+        onLogsChanged={props.onLogsChanged}
       />
       <div className="control-grid">
         <SelectField

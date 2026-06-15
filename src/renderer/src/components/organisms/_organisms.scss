@@ -157,6 +157,232 @@
   }
 }
 
+.audio-recorder {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(12rem, 1fr) minmax(10rem, 1.2fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgb(214 111 63 / 0.28);
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 0.72), transparent),
+    #fff3df;
+  box-shadow: inset 0 1px 0 white;
+
+  &__summary {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.65rem;
+
+    > div {
+      min-width: 0;
+    }
+
+    strong,
+    small {
+      display: block;
+    }
+
+    strong {
+      color: #543120;
+      font-size: 0.78rem;
+    }
+
+    small {
+      margin-top: 0.18rem;
+      overflow: hidden;
+      color: #916b55;
+      font-size: 0.62rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__microphone {
+    display: grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgb(214 111 63 / 0.32);
+    border-radius: 50%;
+    color: #a84e20;
+    background: #ffe2bd;
+
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+  }
+
+  &__meter {
+    display: flex;
+    height: 2.6rem;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0.35rem 0.5rem;
+    overflow: hidden;
+    border: 1px solid rgb(226 143 66 / 0.3);
+    border-radius: 0.75rem;
+    background: rgb(255 255 255 / 0.58);
+
+    span {
+      width: 3px;
+      height: 100%;
+      border-radius: var(--radius-pill);
+      background: #d9c2ac;
+      transform-origin: center;
+      transition: transform 80ms linear, background 160ms ease;
+    }
+  }
+
+  &__timer {
+    color: #6d4029;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+  }
+
+  > .button {
+    min-width: 7.6rem;
+    min-height: 2.55rem;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.72rem;
+  }
+
+  &__status,
+  &__error {
+    grid-column: 1 / -1;
+    min-width: 0;
+    margin: -0.2rem 0 0;
+    overflow-wrap: anywhere;
+    font-size: 0.62rem;
+  }
+
+  &__status {
+    color: #23725d;
+  }
+
+  &__error {
+    color: var(--color-error);
+  }
+
+  &--recording {
+    border-color: #e16162;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.72), transparent),
+      #fff0ea;
+
+    .audio-recorder__microphone {
+      color: white;
+      background: #df535a;
+      box-shadow: 0 0 0 5px rgb(223 83 90 / 0.12);
+    }
+
+    .audio-recorder__meter span {
+      background: linear-gradient(180deg, #ffac58, #e15359);
+    }
+  }
+
+  &--requesting-permission,
+  &--stopping,
+  &--transcribing {
+    .audio-recorder__microphone {
+      animation: recorder-pulse 1s ease-in-out infinite alternate;
+    }
+  }
+}
+
+.recording-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(62 31 18 / 0.46);
+    backdrop-filter: blur(4px);
+  }
+
+  &__content {
+    position: relative;
+    z-index: 1;
+    width: min(31rem, 100%);
+    padding: 1.3rem;
+    border: 1px solid #e6a268;
+    border-radius: 1.2rem;
+    color: #52301f;
+    background: linear-gradient(145deg, #fffdf8, #ffead3);
+    box-shadow:
+      inset 0 1px 0 white,
+      0 24px 70px rgb(62 31 18 / 0.28);
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: -0.025em;
+    }
+
+    p {
+      margin: 0.6rem 0;
+      color: #79533e;
+      font-size: 0.82rem;
+      line-height: 1.55;
+    }
+
+    code {
+      display: block;
+      max-height: 4rem;
+      padding: 0.55rem 0.65rem;
+      overflow: auto;
+      border-radius: 0.6rem;
+      color: #855132;
+      background: rgb(126 72 38 / 0.08);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__actions {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr 0.8fr;
+    gap: 0.5rem;
+    margin-top: 1rem;
+
+    .button {
+      min-height: 2.65rem;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.7rem;
+    }
+  }
+}
+
+@keyframes recorder-pulse {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+
 .runtime-panel {
   box-shadow: 0 14px 38px rgb(126 72 38 / 0.09);
 }
@@ -987,6 +1213,25 @@
 }
 
 @media (max-width: 760px) {
+  .audio-recorder {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    &__meter {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    &__timer {
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    > .button {
+      grid-column: 2;
+      grid-row: 3;
+    }
+  }
+
   .control-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1006,6 +1251,26 @@
 }
 
 @include compact {
+  .audio-recorder {
+    grid-template-columns: 1fr;
+
+    &__summary,
+    &__meter,
+    &__timer,
+    > .button {
+      grid-column: 1;
+      grid-row: auto;
+    }
+
+    > .button {
+      width: 100%;
+    }
+  }
+
+  .recording-dialog__actions {
+    grid-template-columns: 1fr;
+  }
+
   .app-header {
     padding: 1.1rem;
 

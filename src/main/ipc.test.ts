@@ -32,8 +32,10 @@ vi.mock("electron", () => ({
 import {
   convertAudioSchema,
   jobIdSchema,
+  recordingEventSchema,
   registerIpcHandlers,
   runtimeItemSchema,
+  saveRecordingSchema,
   startTranscriptionJobSchema,
   transcribeAudioSchema
 } from "./ipc";
@@ -57,6 +59,19 @@ describe("IPC schemas", () => {
 
   it("requires a concrete conversion input path", () => {
     expect(() => convertAudioSchema.parse({ inputPath: "" })).toThrow();
+  });
+
+  it("validates recording payloads and allowlisted lifecycle events", () => {
+    expect(
+      saveRecordingSchema.parse({
+        data: new Uint8Array([1, 2, 3]),
+        mimeType: "audio/webm;codecs=opus",
+        durationMs: 1200
+      })
+    ).toMatchObject({ mimeType: "audio/webm;codecs=opus", durationMs: 1200 });
+    expect(() =>
+      recordingEventSchema.parse({ event: "arbitrary", message: "nope" })
+    ).toThrow();
   });
 
   it("validates fixed transcription job inputs and UUID controls", () => {
