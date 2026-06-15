@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.4.0...v0.5.0) (2026-06-15)
+
+
+### Features
+
+* add local microphone recording ([#9](https://github.com/nhcminh47/Meeting-Notes/issues/9)) ([b472d9d](https://github.com/nhcminh47/Meeting-Notes/commit/b472d9dee035c991852a7baa9f962cd666e6a564))
+
 ## [0.4.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.3.0...v0.4.0) (2026-06-14)
 
 
