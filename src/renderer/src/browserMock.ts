@@ -62,7 +62,22 @@ const browserApi: LocalStudioApi = {
     convertToWav16k: async () => ({
       jobId: "browser-preview",
       outputPath: "browser-preview://converted.wav"
-    })
+    }),
+    saveRecording: async () => ({
+      path: "browser-preview://recording.webm",
+      name: "recording.webm"
+    }),
+    keepRecording: async () => undefined,
+    discardRecording: async () => undefined,
+    reportRecordingEvent: async (input) => {
+      events.push({
+        id: events.length + 1,
+        timestamp: new Date().toISOString(),
+        level: input.event === "error" ? "error" : "info",
+        source: "recording",
+        message: `Recording event: ${input.event}`
+      });
+    }
   },
   transcribe: {
     start: async (input) => {

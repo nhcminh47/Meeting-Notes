@@ -2,7 +2,7 @@ import { BrowserWindow, dialog, ipcMain } from "electron";
 import type { IpcMainInvokeEvent } from "electron";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { stat } from "node:fs/promises";
+import { mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { z } from "zod";
 import {
   ensureRequiredRuntime,
@@ -12,7 +12,7 @@ import {
 } from "./runtime/runtimeManager";
 import { convertToWav16kMono } from "./audio/ffmpegService";
 import { transcribeAudioFile } from "./transcription/whisperService";
-import { createWorkPaths } from "./runtime/runtimePaths";
+import { createRecordingPaths, createWorkPaths } from "./runtime/runtimePaths";
 import { getLogSnapshot, logError, logEvent } from "./eventLogger";
 import {
   getTranscriptionJobStatus,
@@ -24,6 +24,9 @@ import {
 
 const selectedAudioPaths = new Set<string>();
 const managedAudioPaths = new Set<string>();
+const recordingAudioPaths = new Set<string>();
+const discardableRecordingPaths = new Set<string>();
+const MAX_RECORDING_BYTES = 512 * 1024 * 1024;
 
 export const runtimeItemSchema = z.enum([
   "ffmpeg",
@@ -49,6 +52,25 @@ export const startTranscriptionJobSchema = z.object({
   debugMode: z.boolean().optional()
 });
 export const jobIdSchema = z.string().uuid();
+export const saveRecordingSchema = z.object({
+  data: z.instanceof(Uint8Array),
+  mimeType: z.string().min(1).max(120),
+  durationMs: z.number().int().min(0).max(24 * 60 * 60 * 1000)
+});
+export const recordingPathSchema = z.string().min(1).max(32767);
+export const recordingEventSchema = z.object({
+  event: z.enum([
+    "permission-granted",
+    "permission-denied",
+    "started",
+    "stopped",
+    "transcribe-requested",
+    "error"
+  ]),
+  mimeType: z.string().max(120).optional(),
+  durationMs: z.number().int().min(0).max(24 * 60 * 60 * 1000).optional(),
+  message: z.string().max(500).optional()
+});
 
 const ALLOWED_AUDIO_EXTENSIONS = new Set([
   ".wav",
@@ -63,6 +85,15 @@ const ALLOWED_AUDIO_EXTENSIONS = new Set([
   ".mov",
   ".mkv",
   ".webm"
+]);
+const RECORDING_FORMATS = new Map([
+  ["audio/wav", ".wav"],
+  ["audio/wave", ".wav"],
+  ["audio/x-wav", ".wav"],
+  ["audio/webm", ".webm"],
+  ["audio/webm;codecs=opus", ".webm"],
+  ["audio/ogg", ".ogg"],
+  ["audio/ogg;codecs=opus", ".ogg"]
 ]);
 
 async function assertAudioPath(filePath: string): Promise<void> {
@@ -128,6 +159,85 @@ export function registerIpcHandlers(): void {
     return { path: selectedPath, name: path.basename(selectedPath) };
   });
 
+  ipcMain.handle("audio:save-recording", async (_event, rawInput: unknown) => {
+    try {
+      const input = saveRecordingSchema.parse(rawInput);
+      if (input.data.byteLength === 0) throw new Error("The recording is empty.");
+      if (input.data.byteLength > MAX_RECORDING_BYTES) {
+        throw new Error("The recording exceeds the 512 MB local limit.");
+      }
+      const normalizedMimeType = input.mimeType.toLowerCase().replace(/\s/g, "");
+      const extension = RECORDING_FORMATS.get(normalizedMimeType);
+      if (!extension) throw new Error("Unsupported recording format.");
+
+      const { recordingRoot, recordingPath } = createRecordingPaths(
+        randomUUID(),
+        extension
+      );
+      await mkdir(recordingRoot, { recursive: true });
+      await writeFile(recordingPath, input.data);
+      const resolvedPath = path.resolve(recordingPath);
+      selectedAudioPaths.add(resolvedPath);
+      recordingAudioPaths.add(resolvedPath);
+      discardableRecordingPaths.add(resolvedPath);
+      logEvent("info", "recording", "Microphone recording saved locally.", {
+        path: resolvedPath,
+        format: normalizedMimeType,
+        durationMs: input.durationMs,
+        bytes: input.data.byteLength
+      });
+      return { path: resolvedPath, name: path.basename(resolvedPath) };
+    } catch (error) {
+      logError("recording", "Saving microphone recording failed.", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("audio:keep-recording", async (_event, rawPath: unknown) => {
+    const recordingPath = path.resolve(recordingPathSchema.parse(rawPath));
+    if (!recordingAudioPaths.has(recordingPath)) {
+      throw new Error("Only recordings created by this application can be retained.");
+    }
+    await assertAudioPath(recordingPath);
+    discardableRecordingPaths.delete(recordingPath);
+    logEvent("info", "recording", "Recording retained locally.", {
+      path: recordingPath
+    });
+  });
+
+  ipcMain.handle("audio:discard-recording", async (_event, rawPath: unknown) => {
+    const recordingPath = path.resolve(recordingPathSchema.parse(rawPath));
+    if (!discardableRecordingPaths.has(recordingPath)) {
+      throw new Error("Only temporary recordings can be discarded.");
+    }
+    await rm(path.dirname(recordingPath), { recursive: true, force: true });
+    selectedAudioPaths.delete(recordingPath);
+    recordingAudioPaths.delete(recordingPath);
+    discardableRecordingPaths.delete(recordingPath);
+    logEvent("warn", "recording", "Microphone recording discarded.", {
+      path: recordingPath
+    });
+  });
+
+  ipcMain.handle("audio:report-recording-event", async (_event, rawInput: unknown) => {
+    const input = recordingEventSchema.parse(rawInput);
+    const level =
+      input.event === "error" || input.event === "permission-denied" ? "error" : "info";
+    const messages = {
+      "permission-granted": "Microphone permission granted.",
+      "permission-denied": "Microphone permission denied.",
+      started: "Microphone recording started.",
+      stopped: "Microphone recording stopped.",
+      "transcribe-requested": "Recording queued for transcription.",
+      error: "Microphone recording failed."
+    } as const;
+    logEvent(level, "recording", messages[input.event], {
+      mimeType: input.mimeType ?? "",
+      durationMs: input.durationMs ?? 0,
+      message: input.message ?? ""
+    });
+  });
+
   ipcMain.handle("audio:convert-to-wav16k", async (_event, rawInput: unknown) => {
     try {
       const input = convertAudioSchema.parse(rawInput);
@@ -155,6 +265,11 @@ export function registerIpcHandlers(): void {
         throw new Error("Select the audio file through the application first.");
       }
       await assertAudioPath(inputPath);
+      if (recordingAudioPaths.has(inputPath)) {
+        logEvent("info", "recording", "Saved recording loaded for transcription.", {
+          path: inputPath
+        });
+      }
       return startTranscriptionJob({ ...input, inputPath });
     } catch (error) {
       logError("ipc", "Starting transcription job failed.", error);

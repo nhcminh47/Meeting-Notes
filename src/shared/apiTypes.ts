@@ -5,6 +5,34 @@ export type AudioFileSelection = {
   name: string;
 };
 
+export type RecordingState =
+  | "idle"
+  | "requesting-permission"
+  | "recording"
+  | "stopping"
+  | "recorded"
+  | "transcribing"
+  | "error";
+
+export type SaveRecordingInput = {
+  data: Uint8Array;
+  mimeType: string;
+  durationMs: number;
+};
+
+export type RecordingEventInput = {
+  event:
+    | "permission-granted"
+    | "permission-denied"
+    | "started"
+    | "stopped"
+    | "transcribe-requested"
+    | "error";
+  mimeType?: string;
+  durationMs?: number;
+  message?: string;
+};
+
 export type ConvertAudioRequest = {
   inputPath: string;
 };
@@ -87,6 +115,10 @@ export type LocalStudioApi = {
   audio: {
     pickFile: () => Promise<AudioFileSelection | null>;
     convertToWav16k: (input: ConvertAudioRequest) => Promise<ConvertAudioResult>;
+    saveRecording: (input: SaveRecordingInput) => Promise<AudioFileSelection>;
+    keepRecording: (path: string) => Promise<void>;
+    discardRecording: (path: string) => Promise<void>;
+    reportRecordingEvent: (input: RecordingEventInput) => Promise<void>;
   };
   transcribe: {
     start: (input: StartTranscriptionJobInput) => Promise<TranscriptionJobStatus>;

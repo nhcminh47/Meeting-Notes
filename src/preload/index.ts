@@ -23,7 +23,14 @@ const api: LocalStudioApi = {
   },
   audio: {
     pickFile: () => ipcRenderer.invoke("audio:pick-file"),
-    convertToWav16k: (input) => ipcRenderer.invoke("audio:convert-to-wav16k", input)
+    convertToWav16k: (input) => ipcRenderer.invoke("audio:convert-to-wav16k", input),
+    saveRecording: (input) => ipcRenderer.invoke("audio:save-recording", input),
+    keepRecording: (recordingPath) =>
+      ipcRenderer.invoke("audio:keep-recording", recordingPath),
+    discardRecording: (recordingPath) =>
+      ipcRenderer.invoke("audio:discard-recording", recordingPath),
+    reportRecordingEvent: (input) =>
+      ipcRenderer.invoke("audio:report-recording-event", input)
   },
   transcribe: {
     start: (input) => ipcRenderer.invoke("transcribe:start", input),

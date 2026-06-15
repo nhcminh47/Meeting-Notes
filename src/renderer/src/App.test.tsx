@@ -52,7 +52,11 @@ beforeEach(() => {
     },
     audio: {
       pickFile: vi.fn(),
-      convertToWav16k: vi.fn()
+      convertToWav16k: vi.fn(),
+      saveRecording: vi.fn(),
+      keepRecording: vi.fn(),
+      discardRecording: vi.fn(),
+      reportRecordingEvent: vi.fn(async () => undefined)
     },
     transcribe: {
       start: vi.fn(),

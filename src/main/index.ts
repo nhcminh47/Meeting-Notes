@@ -29,6 +29,31 @@ function createWindow(): void {
     }
   });
 
+  const appSession = window.webContents.session;
+  appSession.setPermissionCheckHandler((webContents, permission) => {
+    return webContents?.id === window.webContents.id && permission === "media";
+  });
+  appSession.setPermissionRequestHandler(
+    (webContents, permission, callback, details) => {
+      const mediaTypes =
+        permission === "media" && "mediaTypes" in details
+          ? (details.mediaTypes ?? [])
+          : [];
+      const microphoneOnly =
+        mediaTypes.includes("audio") && !mediaTypes.includes("video");
+      const allowed =
+        webContents.id === window.webContents.id &&
+        permission === "media" &&
+        microphoneOnly;
+      logEvent(allowed ? "info" : "warn", "electron", "Media permission requested.", {
+        permission,
+        mediaTypes: mediaTypes.join(","),
+        allowed
+      });
+      callback(allowed);
+    }
+  );
+
   const sendMaximizedState = () => {
     if (!window.isDestroyed()) {
       window.webContents.send("window:maximized-changed", window.isMaximized());

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   AudioFileSelection,
   LogSnapshot,
+  RecordingState,
   TranscriptionJobStatus
 } from "../../shared/apiTypes";
 import type { RuntimeStatus } from "../../main/runtime/runtimeTypes";
@@ -54,6 +55,7 @@ export default function App() {
   const [logsExpanded, setLogsExpanded] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [windowMaximized, setWindowMaximized] = useState(false);
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
 
   const refreshStatus = useCallback(async () => {
     setStatus(await window.localStudio.runtime.getStatus());
@@ -155,17 +157,18 @@ export default function App() {
     }
   }
 
-  async function startOrResume() {
-    if (!selection) return;
+  async function startOrResume(recordedSelection?: AudioFileSelection) {
+    const activeSelection = recordedSelection ?? selection;
+    if (!activeSelection) return;
     setError("");
     try {
-      if (job?.state === "paused") {
+      if (!recordedSelection && job?.state === "paused") {
         setJob(await window.localStudio.transcribe.resume(job.jobId));
       } else {
         setText("");
         setOutputFiles([]);
         const next = await window.localStudio.transcribe.start({
-          inputPath: selection.path,
+          inputPath: activeSelection.path,
           model,
           language,
           outputFormat: format,
@@ -183,6 +186,14 @@ export default function App() {
       setError(friendlyError(reason));
       await refreshLogs().catch(() => undefined);
     }
+  }
+
+  async function transcribeRecording(recordedSelection: AudioFileSelection) {
+    setSelection(recordedSelection);
+    setText("");
+    setOutputFiles([]);
+    setJob(null);
+    await startOrResume(recordedSelection);
   }
 
   async function pauseJob() {
@@ -238,12 +249,20 @@ export default function App() {
       logicalCpuCount={logicalCpuCount}
       job={job}
       jobRunning={jobRunning}
+      recordingState={recordingState}
       onPickFile={pickFile}
+      onRecordingStateChange={setRecordingState}
+      onTranscribeRecording={transcribeRecording}
+      onLogsChanged={() => {
+        refreshLogs().catch(() => undefined);
+      }}
       onModelChange={setModel}
       onLanguageChange={setLanguage}
       onFormatChange={setFormat}
       onCpuChange={setCpuThreads}
-      onStart={startOrResume}
+      onStart={() => {
+        void startOrResume();
+      }}
       onPause={pauseJob}
       onStop={stopJob}
     />

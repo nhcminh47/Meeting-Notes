@@ -36,3 +36,17 @@ export function createWorkPaths(jobId: string) {
     transcriptPrefix: path.join(jobRoot, "transcript")
   };
 }
+
+export function createRecordingPaths(recordingId: string, extension: string) {
+  if (!/^[a-f0-9-]+$/i.test(recordingId)) {
+    throw new Error("Invalid recording identifier.");
+  }
+  if (!/^\.[a-z0-9]+$/i.test(extension)) {
+    throw new Error("Invalid recording extension.");
+  }
+  const recordingRoot = path.join(getRuntimePaths().workRoot, "recordings", recordingId);
+  return {
+    recordingRoot,
+    recordingPath: path.join(recordingRoot, `recording${extension}`)
+  };
+}
