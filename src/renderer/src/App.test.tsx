@@ -65,6 +65,12 @@ beforeEach(() => {
       resume: vi.fn(),
       stop: vi.fn()
     },
+    liveTranscript: {
+      startSession: vi.fn(),
+      enqueueChunk: vi.fn(),
+      finishSession: vi.fn(),
+      cancelSession: vi.fn()
+    },
     diagnostics: {
       getEvents: vi.fn(async () => ({
         events: [],

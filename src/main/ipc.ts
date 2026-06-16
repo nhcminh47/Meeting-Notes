@@ -15,6 +15,12 @@ import { transcribeAudioFile } from "./transcription/whisperService";
 import { createRecordingPaths, createWorkPaths } from "./runtime/runtimePaths";
 import { getLogSnapshot, logError, logEvent } from "./eventLogger";
 import {
+  cancelLiveTranscriptSession,
+  enqueueLiveTranscriptChunk,
+  finishLiveTranscriptSession,
+  startLiveTranscriptSession
+} from "./transcription/liveTranscriptSessionManager";
+import {
   getTranscriptionJobStatus,
   pauseTranscriptionJob,
   resumeTranscriptionJob,
@@ -70,6 +76,25 @@ export const recordingEventSchema = z.object({
   mimeType: z.string().max(120).optional(),
   durationMs: z.number().int().min(0).max(24 * 60 * 60 * 1000).optional(),
   message: z.string().max(500).optional()
+});
+export const startLiveTranscriptSessionSchema = z.object({
+  model: z.enum(["small", "medium"]).optional(),
+  language: z.enum(["vi", "en", "auto"]).optional(),
+  cpuThreads: z.number().int().min(1).max(64).optional(),
+  debugMode: z.boolean().optional()
+});
+export const liveTranscriptChunkSchema = z.object({
+  sessionId: z.string().uuid(),
+  chunkIndex: z.number().int().min(0).max(100000),
+  data: z.instanceof(Uint8Array),
+  mimeType: z.string().min(1).max(120),
+  durationMs: z.number().int().min(0).max(10 * 60 * 1000),
+  isFinal: z.boolean().optional()
+});
+export const finishLiveTranscriptSessionSchema = z.object({
+  sessionId: z.string().uuid(),
+  finalText: z.string().max(5_000_000),
+  saveTranscript: z.boolean().optional()
 });
 
 const ALLOWED_AUDIO_EXTENSIONS = new Set([
@@ -304,5 +329,23 @@ export function registerIpcHandlers(): void {
       logError("ipc", "Transcription request failed.", error);
       throw error;
     }
+  });
+
+  ipcMain.handle("live-transcript:start-session", async (_event, rawInput: unknown) => {
+    return startLiveTranscriptSession(startLiveTranscriptSessionSchema.parse(rawInput));
+  });
+
+  ipcMain.handle("live-transcript:enqueue-chunk", async (_event, rawInput: unknown) => {
+    return enqueueLiveTranscriptChunk(liveTranscriptChunkSchema.parse(rawInput));
+  });
+
+  ipcMain.handle("live-transcript:finish-session", async (_event, rawInput: unknown) => {
+    return finishLiveTranscriptSession(
+      finishLiveTranscriptSessionSchema.parse(rawInput)
+    );
+  });
+
+  ipcMain.handle("live-transcript:cancel-session", async (_event, sessionId: unknown) => {
+    await cancelLiveTranscriptSession(jobIdSchema.parse(sessionId));
   });
 }

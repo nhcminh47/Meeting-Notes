@@ -13,6 +13,7 @@ import {
   type BusyAction
 } from "./components/organisms/RuntimePanel";
 import { TranscriptionWorkspace } from "./components/organisms/TranscriptionWorkspace";
+import type { LiveTranscriptState } from "./components/organisms/LiveTranscriptRecorder";
 import { TranscriptResultPanel } from "./components/organisms/TranscriptResultPanel";
 import { DiagnosticsPanel } from "./components/organisms/DiagnosticsPanel";
 import { WindowTitlebar } from "./components/organisms/WindowTitlebar";
@@ -56,6 +57,9 @@ export default function App() {
   const [debugMode, setDebugMode] = useState(false);
   const [windowMaximized, setWindowMaximized] = useState(false);
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+  const [liveTranscriptState, setLiveTranscriptState] =
+    useState<LiveTranscriptState>("idle");
+  const [resultId, setResultId] = useState("transcript-result");
 
   const refreshStatus = useCallback(async () => {
     setStatus(await window.localStudio.runtime.getStatus());
@@ -103,6 +107,7 @@ export default function App() {
         if (next.result) {
           setText(next.result.text);
           setOutputFiles(next.result.outputFiles);
+          setResultId(next.jobId);
         }
         if (next.error) setError(next.error);
       } catch (reason) {
@@ -176,9 +181,11 @@ export default function App() {
           debugMode
         });
         setJob(next);
+        setResultId(next.jobId);
         if (next.result) {
           setText(next.result.text);
           setOutputFiles(next.result.outputFiles);
+          setResultId(next.jobId);
         }
         if (next.error) setError(next.error);
       }
@@ -192,6 +199,7 @@ export default function App() {
     setSelection(recordedSelection);
     setText("");
     setOutputFiles([]);
+    setResultId("transcript-result");
     setJob(null);
     await startOrResume(recordedSelection);
   }
@@ -250,9 +258,19 @@ export default function App() {
       job={job}
       jobRunning={jobRunning}
       recordingState={recordingState}
+      liveTranscriptState={liveTranscriptState}
+      debugMode={debugMode}
       onPickFile={pickFile}
       onRecordingStateChange={setRecordingState}
+      onLiveTranscriptStateChange={setLiveTranscriptState}
       onTranscribeRecording={transcribeRecording}
+      onLiveTranscriptFinalized={(result) => {
+        setJob(null);
+        setSelection(null);
+        setText(result.text);
+        setOutputFiles(result.outputFiles);
+        setResultId(`live-${Date.now()}`);
+      }}
       onLogsChanged={() => {
         refreshLogs().catch(() => undefined);
       }}
@@ -328,8 +346,8 @@ export default function App() {
           </div>
           {(text || outputFiles.length > 0) && (
             <TranscriptResultPanel
-              key={job?.jobId ?? outputFiles[0] ?? "transcript-result"}
-              jobId={job?.jobId ?? "transcript-result"}
+              key={job?.jobId ?? outputFiles[0] ?? resultId}
+              jobId={job?.jobId ?? resultId}
               text={text}
               outputFiles={outputFiles}
               format={format}

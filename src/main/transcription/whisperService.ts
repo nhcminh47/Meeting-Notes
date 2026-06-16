@@ -46,6 +46,14 @@ const RELAXED_DECODER: DecoderConfig = {
   temperatureIncrement: 0.2
 };
 
+const LIVE_CHUNK_DECODER: DecoderConfig = {
+  noSpeechThreshold: 0.42,
+  logprobThreshold: -0.55,
+  entropyThreshold: 1.8,
+  temperature: 0,
+  temperatureIncrement: 0
+};
+
 async function assertFile(filePath: string, label: string): Promise<void> {
   try {
     if (!(await stat(filePath)).isFile()) {
@@ -222,6 +230,7 @@ function logRuntimeConfig(details: {
   executable: string;
   args: string[];
   retry: boolean;
+  liveChunkMode: boolean;
 }): void {
   logEvent("info", "transcription", "Whisper runtime configuration resolved.", {
     selectedLanguage: details.selectedLanguage,
@@ -234,6 +243,7 @@ function logRuntimeConfig(details: {
     commandArgs: JSON.stringify(details.args),
     vadEnabled: false,
     chunkingEnabled: false,
+    liveChunkMode: details.liveChunkMode,
     noSpeechThreshold: details.decoder.noSpeechThreshold,
     logprobThreshold: details.decoder.logprobThreshold,
     compressionRatioThreshold: "not exposed by whisper.cpp CLI",
@@ -269,6 +279,7 @@ export async function transcribeAudioFile(
     signal?: AbortSignal;
     cpuThreads?: number;
     debugMode?: boolean;
+    liveChunkMode?: boolean;
     onProgress?: (progress: number) => void;
   }
 ): Promise<TranscriptionResult> {
@@ -285,6 +296,7 @@ export async function transcribeAudioFile(
   const work = input.outputPrefix ? null : createWorkPaths(randomUUID());
   const transcriptPrefix = input.outputPrefix ?? work!.transcriptPrefix;
   const outputPath = `${transcriptPrefix}.${outputFormat}`;
+  const liveChunkMode = input.liveChunkMode ?? false;
 
   await assertFile(input.audioPath, "Audio file");
   await assertFile(runtime.whisperExe, "whisper.cpp executable");
@@ -326,7 +338,8 @@ export async function transcribeAudioFile(
       decoder,
       executable: runtime.whisperExe,
       args,
-      retry
+      retry,
+      liveChunkMode
     });
     if (input.debugMode) {
       logEvent("info", "transcription-debug", "Whisper command prepared.", {
@@ -398,8 +411,8 @@ export async function transcribeAudioFile(
     return analysis;
   };
 
-  let analysis = await execute(DEFAULT_DECODER, false);
-  if (isSuspiciouslyShort(selectedLanguage, audioDurationSeconds, analysis)) {
+  let analysis = await execute(liveChunkMode ? LIVE_CHUNK_DECODER : DEFAULT_DECODER, false);
+  if (!liveChunkMode && isSuspiciouslyShort(selectedLanguage, audioDurationSeconds, analysis)) {
     logEvent("warn", "transcription", "Transcript appears suspiciously short; retrying once.", {
       selectedLanguage,
       resolvedLanguageArgument: languageArgument,
