@@ -54,6 +54,7 @@ function createApi(): LocalStudioApi {
       reportRecordingEvent: vi.fn(async () => undefined)
     },
     transcribe: {} as LocalStudioApi["transcribe"],
+    liveTranscript: {} as LocalStudioApi["liveTranscript"],
     diagnostics: {} as LocalStudioApi["diagnostics"]
   };
 }

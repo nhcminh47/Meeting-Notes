@@ -117,6 +117,22 @@ const browserApi: LocalStudioApi = {
       return job;
     }
   },
+  liveTranscript: {
+    startSession: async () => ({ sessionId: "00000000-0000-4000-8000-000000000002" }),
+    enqueueChunk: async (input) => ({
+      sessionId: input.sessionId,
+      chunkIndex: input.chunkIndex,
+      text: "",
+      status: "waiting for speech",
+      queueDepth: 0
+    }),
+    finishSession: async (input) => ({
+      sessionId: input.sessionId,
+      text: input.finalText,
+      outputFiles: input.finalText ? ["browser-preview://live-transcript.txt"] : []
+    }),
+    cancelSession: async () => undefined
+  },
   diagnostics: {
     getEvents: async () => ({
       events,

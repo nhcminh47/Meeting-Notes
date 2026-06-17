@@ -33,6 +33,55 @@ export type RecordingEventInput = {
   message?: string;
 };
 
+export type LiveTranscriptStatus =
+  | "listening"
+  | "transcribing chunk"
+  | "appended"
+  | "waiting for speech"
+  | "catching up"
+  | "stopping"
+  | "error";
+
+export type StartLiveTranscriptSessionInput = {
+  model?: "small" | "medium";
+  language?: "vi" | "en" | "auto";
+  cpuThreads?: number;
+  debugMode?: boolean;
+};
+
+export type LiveTranscriptSession = {
+  sessionId: string;
+};
+
+export type LiveTranscriptChunkInput = {
+  sessionId: string;
+  chunkIndex: number;
+  data: Uint8Array;
+  mimeType: string;
+  durationMs: number;
+  isFinal?: boolean;
+};
+
+export type LiveTranscriptChunkResult = {
+  sessionId: string;
+  chunkIndex: number;
+  text: string;
+  status: LiveTranscriptStatus;
+  queueDepth: number;
+};
+
+export type FinishLiveTranscriptSessionInput = {
+  sessionId: string;
+  finalText: string;
+  saveTranscript?: boolean;
+};
+
+export type FinishLiveTranscriptSessionResult = {
+  sessionId: string;
+  text: string;
+  outputFiles: string[];
+};
+
 export type ConvertAudioRequest = {
   inputPath: string;
 };
@@ -126,6 +175,18 @@ export type LocalStudioApi = {
     pause: (jobId: string) => Promise<TranscriptionJobStatus>;
     resume: (jobId: string) => Promise<TranscriptionJobStatus>;
     stop: (jobId: string) => Promise<TranscriptionJobStatus>;
+  };
+  liveTranscript: {
+    startSession: (
+      input: StartLiveTranscriptSessionInput
+    ) => Promise<LiveTranscriptSession>;
+    enqueueChunk: (
+      input: LiveTranscriptChunkInput
+    ) => Promise<LiveTranscriptChunkResult>;
+    finishSession: (
+      input: FinishLiveTranscriptSessionInput
+    ) => Promise<FinishLiveTranscriptSessionResult>;
+    cancelSession: (sessionId: string) => Promise<void>;
   };
   diagnostics: {
     getEvents: () => Promise<LogSnapshot>;

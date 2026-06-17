@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type {
   AudioFileSelection,
+  TranscriptionResult,
   RecordingState,
   TranscriptionJobStatus
 } from "../../../../shared/apiTypes";
@@ -9,6 +10,10 @@ import { SelectField } from "../atoms/SelectField";
 import { FilePicker } from "../molecules/FilePicker";
 import { JobStatus } from "../molecules/JobStatus";
 import { AudioRecorder } from "./AudioRecorder";
+import {
+  LiveTranscriptRecorder,
+  type LiveTranscriptState
+} from "./LiveTranscriptRecorder";
 import musicNoteIcon from "../../assets/icons/music-note.png";
 
 function ControlIcon(props: {
@@ -73,9 +78,13 @@ export function TranscriptionWorkspace(props: {
   job: TranscriptionJobStatus | null;
   jobRunning: boolean;
   recordingState: RecordingState;
+  liveTranscriptState: LiveTranscriptState;
+  debugMode: boolean;
   onPickFile: () => void;
   onRecordingStateChange: (state: RecordingState) => void;
+  onLiveTranscriptStateChange: (state: LiveTranscriptState) => void;
   onTranscribeRecording: (selection: AudioFileSelection) => Promise<void>;
+  onLiveTranscriptFinalized: (result: TranscriptionResult) => void;
   onLogsChanged: () => void;
   onModelChange: (value: "small" | "medium") => void;
   onLanguageChange: (value: "vi" | "en" | "auto") => void;
@@ -85,9 +94,19 @@ export function TranscriptionWorkspace(props: {
   onPause: () => void;
   onStop: () => void;
 }) {
+  const [activeMode, setActiveMode] = useState<
+    "file-transcript" | "record-audio" | "live-transcript"
+  >("file-transcript");
   const recordingBusy = !["idle", "error"].includes(props.recordingState);
+  const liveTranscriptBusy = !["idle", "error", "finalized"].includes(
+    props.liveTranscriptState
+  );
   const controlsLocked =
-    !props.requiredReady || props.busy || props.jobRunning || recordingBusy;
+    !props.requiredReady ||
+    props.busy ||
+    props.jobRunning ||
+    recordingBusy ||
+    liveTranscriptBusy;
   const paused = props.job?.state === "paused";
   const balancedCpuCount = Math.max(1, Math.ceil(props.logicalCpuCount * 0.5));
   const highCpuCount = Math.max(1, Math.ceil(props.logicalCpuCount * 0.75));
@@ -111,23 +130,31 @@ export function TranscriptionWorkspace(props: {
           Install the required runtime to enable transcription.
         </div>
       )}
-      <FilePicker
-        fileName={props.selection?.name}
-        disabled={
-          !props.requiredReady ||
-          props.busy ||
-          Boolean(props.job?.canStop) ||
-          recordingBusy
-        }
-        onPick={props.onPickFile}
-      />
-      <AudioRecorder
-        disabled={!props.requiredReady || props.busy || Boolean(props.job?.canStop)}
-        transcriptionState={props.job?.state}
-        onStateChange={props.onRecordingStateChange}
-        onTranscribe={props.onTranscribeRecording}
-        onLogsChanged={props.onLogsChanged}
-      />
+      <div className="workspace-tabs" role="tablist" aria-label="Transcript mode">
+        {[
+          ["file-transcript", "File transcript"],
+          ["record-audio", "Record audio"],
+          ["live-transcript", "Live transcript"]
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            className={`workspace-tabs__item ${
+              activeMode === value ? "workspace-tabs__item--active" : ""
+            }`}
+            type="button"
+            role="tab"
+            aria-selected={activeMode === value}
+            onClick={() =>
+              setActiveMode(
+                value as "file-transcript" | "record-audio" | "live-transcript"
+              )
+            }
+            disabled={recordingBusy || liveTranscriptBusy || Boolean(props.job?.canStop)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="control-grid">
         <SelectField
           label="Model"
@@ -166,7 +193,7 @@ export function TranscriptionWorkspace(props: {
             { value: "srt", label: "Subtitles (.srt)" }
           ]}
           onChange={(value) => props.onFormatChange(value as "txt" | "json" | "srt")}
-          disabled={controlsLocked || paused}
+          disabled={controlsLocked || paused || activeMode === "live-transcript"}
         />
         <SelectField
           label="CPU Threads"
@@ -177,60 +204,100 @@ export function TranscriptionWorkspace(props: {
           disabled={controlsLocked || paused}
         />
       </div>
-      <div className="transport-deck">
-        <div className="transport-deck__file">
-          <img src={musicNoteIcon} alt="" aria-hidden="true" />
-          <div>
-            <strong>{props.selection?.name ?? "No audio selected"}</strong>
-            <small>
-              {props.selection ? "Ready for local transcription" : "Choose a file above"}
-            </small>
-          </div>
-        </div>
-        <JobStatus
-          job={props.job}
-          running={props.jobRunning}
-          hasSelection={Boolean(props.selection)}
-        />
-        <div className="job-controls">
-          <Button
-            onClick={props.onStart}
+      {activeMode === "file-transcript" && (
+        <>
+          <FilePicker
+            fileName={props.selection?.name}
             disabled={
               !props.requiredReady ||
-              !props.selection ||
               props.busy ||
-              props.jobRunning ||
-              (props.job !== null &&
-                !["paused", "completed", "stopped", "error"].includes(props.job.state))
+              Boolean(props.job?.canStop) ||
+              recordingBusy ||
+              liveTranscriptBusy
             }
-          >
-            <ControlIcon>
-              <path d="m8 5 11 7-11 7z" />
-            </ControlIcon>
-            {paused ? "Resume" : "Start transcription"}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={props.onPause}
-            disabled={!props.job?.canPause || props.busy}
-          >
-            <ControlIcon>
-              <path d="M8 5v14m8-14v14" />
-            </ControlIcon>
-            Pause
-          </Button>
-          <Button
-            variant="danger"
-            onClick={props.onStop}
-            disabled={!props.job?.canStop || props.busy}
-          >
-            <ControlIcon>
-              <rect x="7" y="7" width="10" height="10" rx="1" />
-            </ControlIcon>
-            Stop
-          </Button>
-        </div>
-      </div>
+            onPick={props.onPickFile}
+          />
+          <div className="transport-deck">
+            <div className="transport-deck__file">
+              <img src={musicNoteIcon} alt="" aria-hidden="true" />
+              <div>
+                <strong>{props.selection?.name ?? "No audio selected"}</strong>
+                <small>
+                  {props.selection
+                    ? "Ready for local transcription"
+                    : "Choose a file above"}
+                </small>
+              </div>
+            </div>
+            <JobStatus
+              job={props.job}
+              running={props.jobRunning}
+              hasSelection={Boolean(props.selection)}
+            />
+            <div className="job-controls">
+              <Button
+                onClick={props.onStart}
+                disabled={
+                  !props.requiredReady ||
+                  !props.selection ||
+                  props.busy ||
+                  props.jobRunning ||
+                  (props.job !== null &&
+                    !["paused", "completed", "stopped", "error"].includes(
+                      props.job.state
+                    ))
+                }
+              >
+                <ControlIcon>
+                  <path d="m8 5 11 7-11 7z" />
+                </ControlIcon>
+                {paused ? "Resume" : "Start transcription"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={props.onPause}
+                disabled={!props.job?.canPause || props.busy}
+              >
+                <ControlIcon>
+                  <path d="M8 5v14m8-14v14" />
+                </ControlIcon>
+                Pause
+              </Button>
+              <Button
+                variant="danger"
+                onClick={props.onStop}
+                disabled={!props.job?.canStop || props.busy}
+              >
+                <ControlIcon>
+                  <rect x="7" y="7" width="10" height="10" rx="1" />
+                </ControlIcon>
+                Stop
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+      {activeMode === "record-audio" && (
+        <AudioRecorder
+          disabled={!props.requiredReady || props.busy || Boolean(props.job?.canStop)}
+          transcriptionState={props.job?.state}
+          onStateChange={props.onRecordingStateChange}
+          onTranscribe={props.onTranscribeRecording}
+          onLogsChanged={props.onLogsChanged}
+        />
+      )}
+      {activeMode === "live-transcript" && (
+        <LiveTranscriptRecorder
+          disabled={!props.requiredReady || props.busy || props.jobRunning || recordingBusy}
+          model={props.model}
+          language={props.language}
+          cpuThreads={props.cpuThreads}
+          debugMode={props.debugMode}
+          onStateChange={props.onLiveTranscriptStateChange}
+          onFinalized={props.onLiveTranscriptFinalized}
+          onLogsChanged={props.onLogsChanged}
+        />
+      )}
     </section>
   );
 }

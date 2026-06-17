@@ -44,9 +44,19 @@ export function createRecordingPaths(recordingId: string, extension: string) {
   if (!/^\.[a-z0-9]+$/i.test(extension)) {
     throw new Error("Invalid recording extension.");
   }
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    "-",
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+    String(now.getSeconds()).padStart(2, "0")
+  ].join("");
   const recordingRoot = path.join(getRuntimePaths().workRoot, "recordings", recordingId);
   return {
     recordingRoot,
-    recordingPath: path.join(recordingRoot, `recording${extension}`)
+    recordingPath: path.join(recordingRoot, `recording-${stamp}${extension}`)
   };
 }

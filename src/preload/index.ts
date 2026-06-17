@@ -39,6 +39,16 @@ const api: LocalStudioApi = {
     resume: (jobId) => ipcRenderer.invoke("transcribe:resume", jobId),
     stop: (jobId) => ipcRenderer.invoke("transcribe:stop", jobId)
   },
+  liveTranscript: {
+    startSession: (input) =>
+      ipcRenderer.invoke("live-transcript:start-session", input),
+    enqueueChunk: (input) =>
+      ipcRenderer.invoke("live-transcript:enqueue-chunk", input),
+    finishSession: (input) =>
+      ipcRenderer.invoke("live-transcript:finish-session", input),
+    cancelSession: (sessionId) =>
+      ipcRenderer.invoke("live-transcript:cancel-session", sessionId)
+  },
   diagnostics: {
     getEvents: () => ipcRenderer.invoke("diagnostics:get-events")
   }

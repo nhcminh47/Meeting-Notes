@@ -3,6 +3,7 @@ import path from "node:path";
 import { electronApp, is } from "@electron-toolkit/utils";
 import { registerIpcHandlers } from "./ipc";
 import { logEvent, setEventLogRoot } from "./eventLogger";
+import { cancelAllLiveTranscriptSessions } from "./transcription/liveTranscriptSessionManager";
 
 function getAppIconPath(): string {
   return app.isPackaged
@@ -99,4 +100,8 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on("before-quit", () => {
+  void cancelAllLiveTranscriptSessions();
 });

@@ -157,6 +157,51 @@
   }
 }
 
+.workspace-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0.3rem;
+  border: 1px solid rgb(214 111 63 / 0.22);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 0.5);
+
+  &__item {
+    min-height: 2.45rem;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 0.75rem;
+    color: #7f533d;
+    background: transparent;
+    font-size: 0.72rem;
+    font-weight: 820;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgb(255 235 211 / 0.6);
+    }
+
+    &:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--color-focus) 70%, transparent);
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
+
+    &--active {
+      border-color: #e49a59;
+      color: #5e321b;
+      background: linear-gradient(145deg, #ffe4c4, #f6b36f);
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.66),
+        0 4px 10px rgb(169 84 41 / 0.1);
+    }
+  }
+}
+
 .audio-recorder {
   position: relative;
   display: grid;
@@ -300,6 +345,182 @@
   &--stopping,
   &--transcribing {
     .audio-recorder__microphone {
+      animation: recorder-pulse 1s ease-in-out infinite alternate;
+    }
+  }
+}
+
+.live-transcript {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid rgb(214 111 63 / 0.28);
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 0.74), transparent),
+    #fff3df;
+  box-shadow: inset 0 1px 0 white;
+
+  &__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  &__summary {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.65rem;
+
+    strong,
+    small {
+      display: block;
+    }
+
+    strong {
+      color: #543120;
+      font-size: 0.82rem;
+    }
+
+    small {
+      margin-top: 0.16rem;
+      color: #916b55;
+      font-size: 0.64rem;
+    }
+  }
+
+  &__indicator {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex: 0 0 auto;
+    border: 2px solid white;
+    border-radius: 50%;
+    background: #d9c2ac;
+    box-shadow: 0 0 0 4px rgb(126 72 38 / 0.08);
+  }
+
+  &__timer {
+    color: #6d4029;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 850;
+  }
+
+  .button {
+    min-width: 8rem;
+    min-height: 2.7rem;
+    font-size: 0.76rem;
+  }
+
+  &__meter {
+    display: flex;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0.35rem 0.5rem;
+    overflow: hidden;
+    border: 1px solid rgb(226 143 66 / 0.3);
+    border-radius: 0.75rem;
+    background: rgb(255 255 255 / 0.58);
+
+    span {
+      width: 4px;
+      height: 100%;
+      border-radius: var(--radius-pill);
+      background: #d9c2ac;
+      transform-origin: center;
+      transition: transform 80ms linear, background 160ms ease;
+    }
+  }
+
+  &__status {
+    display: flex;
+    min-height: 2.35rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid rgb(198 124 70 / 0.22);
+    border-radius: 0.8rem;
+    color: #6d4029;
+    background: rgb(255 255 255 / 0.5);
+    font-size: 0.68rem;
+    font-weight: 780;
+    text-transform: capitalize;
+
+    small {
+      color: #916b55;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: none;
+    }
+  }
+
+  &__panel {
+    min-height: 12rem;
+    max-height: 20rem;
+    overflow: auto;
+    padding: 0.85rem 0.9rem;
+    border: 1px solid rgb(198 124 70 / 0.25);
+    border-radius: 0.8rem;
+    color: #4d3022;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.75), transparent),
+      #fff8e9;
+    box-shadow: inset 0 1px 5px rgb(126 72 38 / 0.06);
+    font-size: 0.82rem;
+    line-height: 1.68;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+
+    &:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--color-focus) 70%, transparent);
+      outline-offset: -3px;
+    }
+  }
+
+  &__message,
+  &__error {
+    margin: -0.15rem 0 0;
+    overflow-wrap: anywhere;
+    font-size: 0.64rem;
+  }
+
+  &__message {
+    color: #23725d;
+  }
+
+  &__error {
+    color: var(--color-error);
+  }
+
+  &--listening,
+  &--transcribing,
+  &--catching-up {
+    border-color: #e16162;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.72), transparent),
+      #fff0ea;
+
+    .live-transcript__indicator {
+      background: #df535a;
+      box-shadow: 0 0 0 5px rgb(223 83 90 / 0.13);
+    }
+
+    .live-transcript__meter span {
+      background: linear-gradient(180deg, #ffac58, #e15359);
+    }
+  }
+
+  &--requesting-permission,
+  &--stopping,
+  &--transcribing,
+  &--catching-up {
+    .live-transcript__indicator {
       animation: recorder-pulse 1s ease-in-out infinite alternate;
     }
   }
@@ -1213,6 +1434,19 @@
 }
 
 @media (max-width: 760px) {
+  .workspace-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .live-transcript__controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    .button {
+      grid-column: 1 / -1;
+      width: 100%;
+    }
+  }
+
   .audio-recorder {
     grid-template-columns: minmax(0, 1fr) auto;
 
@@ -1251,6 +1485,22 @@
 }
 
 @include compact {
+  .live-transcript {
+    &__controls {
+      grid-template-columns: 1fr;
+    }
+
+    .button {
+      width: 100%;
+    }
+
+    &__status {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+  }
+
   .audio-recorder {
     grid-template-columns: 1fr;
 

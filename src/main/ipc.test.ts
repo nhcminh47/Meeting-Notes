@@ -31,11 +31,14 @@ vi.mock("electron", () => ({
 
 import {
   convertAudioSchema,
+  finishLiveTranscriptSessionSchema,
   jobIdSchema,
+  liveTranscriptChunkSchema,
   recordingEventSchema,
   registerIpcHandlers,
   runtimeItemSchema,
   saveRecordingSchema,
+  startLiveTranscriptSessionSchema,
   startTranscriptionJobSchema,
   transcribeAudioSchema
 } from "./ipc";
@@ -89,6 +92,47 @@ describe("IPC schemas", () => {
     ).toThrow();
     expect(jobIdSchema.parse("7b60f0c8-a244-4cc3-8748-46a5ea79f341")).toBeTruthy();
     expect(() => jobIdSchema.parse("../../job")).toThrow();
+  });
+
+  it("validates live transcript session and chunk inputs", () => {
+    expect(
+      startLiveTranscriptSessionSchema.parse({
+        model: "small",
+        language: "auto",
+        cpuThreads: 4,
+        debugMode: false
+      })
+    ).toMatchObject({ model: "small", language: "auto", cpuThreads: 4 });
+    expect(() =>
+      startLiveTranscriptSessionSchema.parse({ model: "cloud-large" })
+    ).toThrow();
+
+    expect(
+      liveTranscriptChunkSchema.parse({
+        sessionId: "7b60f0c8-a244-4cc3-8748-46a5ea79f341",
+        chunkIndex: 0,
+        data: new Uint8Array([1, 2, 3]),
+        mimeType: "audio/webm;codecs=opus",
+        durationMs: 8000
+      })
+    ).toMatchObject({ chunkIndex: 0, durationMs: 8000 });
+    expect(() =>
+      liveTranscriptChunkSchema.parse({
+        sessionId: "not-a-session",
+        chunkIndex: -1,
+        data: new Uint8Array([1]),
+        mimeType: "audio/webm",
+        durationMs: 8000
+      })
+    ).toThrow();
+
+    expect(
+      finishLiveTranscriptSessionSchema.parse({
+        sessionId: "7b60f0c8-a244-4cc3-8748-46a5ea79f341",
+        finalText: "hello",
+        saveTranscript: true
+      })
+    ).toMatchObject({ finalText: "hello", saveTranscript: true });
   });
 
   it("scopes native window controls to the sending BrowserWindow", () => {

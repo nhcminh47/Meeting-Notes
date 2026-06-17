@@ -179,6 +179,41 @@ describe("transcribeAudioFile", () => {
     expect(result.text).toContain("recovered continuation");
   });
 
+  it("uses strict decoder settings without retry in live chunk mode", async () => {
+    const audioPath = path.join(root, "live-chunk.wav");
+    await writeFile(audioPath, wavWithDuration(3));
+    runProcess.mockImplementation(async (_executable: string, args: string[]) => {
+      await mkdir(paths.workRoot, { recursive: true });
+      await writeFile(path.join(paths.workRoot, "transcript.txt"), "Hi.");
+      expect(args.slice(args.indexOf("-nth"), args.indexOf("-nth") + 2)).toEqual([
+        "-nth",
+        "0.42"
+      ]);
+      expect(args.slice(args.indexOf("-lpt"), args.indexOf("-lpt") + 2)).toEqual([
+        "-lpt",
+        "-0.55"
+      ]);
+      expect(args.slice(args.indexOf("-et"), args.indexOf("-et") + 2)).toEqual([
+        "-et",
+        "1.8"
+      ]);
+      expect(args.slice(args.indexOf("-tpi"), args.indexOf("-tpi") + 2)).toEqual([
+        "-tpi",
+        "0"
+      ]);
+      return { stdout: "", stderr: "", exitCode: 0, durationMs: 10 };
+    });
+
+    const result = await transcribeAudioFile({
+      audioPath,
+      language: "vi",
+      liveChunkMode: true
+    });
+
+    expect(result.text).toBe("Hi.");
+    expect(runProcess).toHaveBeenCalledTimes(1);
+  });
+
   it("requires the optional medium model before spawning", async () => {
     await rm(paths.medium);
     const audioPath = path.join(root, "audio.wav");
