@@ -1,6 +1,16 @@
 # Local Whisper Studio
 
-Windows x64 Electron desktop app for private, local audio transcription with FFmpeg and whisper.cpp.
+Local Whisper Studio (Meeting Notes) is a local-first meeting assistant. The Windows x64 Electron
+app owns durable meeting data and currently supports private local transcription with FFmpeg and
+whisper.cpp. The roadmap adds an optional remote GPU ASR gateway that processes audio ephemerally;
+it does not become a meeting-data store.
+
+English live meetings are the v1 remote-processing priority. Vietnamese realtime transcription is
+out of scope; Vietnamese batch transcription may follow later. Transcripts are modeled as ordered
+speaker turns, never as bullet-point notes. Summaries and action items are derived artifacts.
+
+See [docs/architecture.md](docs/architecture.md), [docs/roadmap.md](docs/roadmap.md), and
+[docs/codex-guidelines.md](docs/codex-guidelines.md) before extending the remote roadmap.
 
 ## Development
 
