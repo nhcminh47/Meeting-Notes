@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://localwhisperstudio.invalid/schemas/meeting.schema.json",
+  "title": "Meeting metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "title", "language", "status", "createdAt", "startedAt",
+    "endedAt", "recordingPath", "liveTranscriptPath", "finalTranscriptPath", "speakersPath",
+    "notePath", "exportsPath", "finalized"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^mtg_[A-Za-z0-9_-]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "language": { "type": "string", "minLength": 2 },
+    "status": {
+      "enum": ["created", "recording", "processing", "completed", "failed", "cancelled"]
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "startedAt": { "type": ["string", "null"], "format": "date-time" },
+    "endedAt": { "type": ["string", "null"], "format": "date-time" },
+    "recordingPath": { "type": "string", "pattern": "^[^/\\\\].*" },
+    "liveTranscriptPath": { "type": "string", "pattern": "^[^/\\\\].*" },
+    "finalTranscriptPath": { "type": "string", "pattern": "^[^/\\\\].*" },
+    "speakersPath": { "type": "string", "pattern": "^[^/\\\\].*" },
+    "notePath": { "type": "string", "pattern": "^[^/\\\\].*" },
+    "exportsPath": { "type": "string", "pattern": "^[^/\\\\].*" },
+    "serverSessionId": { "type": "string", "minLength": 1 },
+    "finalized": { "type": "boolean" }
+  }
+}
