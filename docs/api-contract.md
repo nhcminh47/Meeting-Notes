@@ -14,3 +14,16 @@ formats.
 
 The server must not return bullet notes as the canonical transcript. Temporary request, audio, job,
 and result files are deleted after delivery, terminal failure, or TTL expiry.
+
+## Gateway foundation endpoints
+
+Issue #15 establishes these JSON endpoints:
+
+- `GET /health` is public and returns only service liveness.
+- `GET /health/private`, `GET /engines`, and `GET /models` require an
+  `Authorization: Bearer <apiKey>` header.
+- Authentication failures use `{"error":{"code":"UNAUTHORIZED","message":"..."}}` with HTTP
+  status 401.
+
+Engine and model responses are configuration placeholders only. They do not indicate that ASR
+inference, streaming, or transcript jobs are available.

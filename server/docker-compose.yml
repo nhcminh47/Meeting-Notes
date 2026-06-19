@@ -1,0 +1,19 @@
+services:
+  asr-gateway:
+    build: .
+    ports:
+      - "${SERVER_PORT:-8000}:8000"
+    environment:
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8000
+      SERVER_API_KEY: ${SERVER_API_KEY:?Set SERVER_API_KEY before starting the gateway}
+      SERVER_STORAGE_MODE: ephemeral
+    restart: unless-stopped
+    # Optional future NVIDIA configuration (not required for the base server):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
