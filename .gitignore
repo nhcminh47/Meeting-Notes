@@ -6,3 +6,8 @@ coverage/
 *.log
 .DS_Store
 issue plan.txt
+.env
+.env.*
+!.env.example
+server/tmp/
+server/data/
