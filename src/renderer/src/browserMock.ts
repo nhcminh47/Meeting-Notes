@@ -152,6 +152,11 @@ const browserApi: LocalStudioApi = {
     stop: async () => ({ state: "stopped", meetingId: "mtg_browser_preview", message: "Live meeting stopped." }),
     getStatus: async () => ({ state: "stopped", meetingId: null, message: "Ready." }),
     onEvent: () => () => undefined
+  },
+  speakers: {
+    getSpeakers: async (meetingId) => ({ schemaVersion: 1, meetingId, speakers: [] }),
+    renameSpeaker: async (input) => ({ schemaVersion: 1, meetingId: input.meetingId, speakers: [] }),
+    clearSpeakerName: async (input) => ({ schemaVersion: 1, meetingId: input.meetingId, speakers: [] })
   }
 };
 

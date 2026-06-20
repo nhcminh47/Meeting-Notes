@@ -40,6 +40,22 @@ artifact paths.
   final snapshot means the meeting is not finalized, regardless of stale metadata.
 - Treat `meeting-note.md` and everything in `exports/` as derived and regenerable.
 
+## Speaker metadata and rename lifecycle
+
+`speakers.json` is the local source of editable speaker display names. A rename trims and validates
+the supplied name, updates only the matching speaker's nullable `name`, and atomically replaces the
+speaker snapshot. Clearing a name, including saving an empty or whitespace-only value, stores
+`null`. The stable `id`, fallback `label`, and transcript turns are not rewritten.
+
+When `speakers.json` is absent, the desktop initializes it from unique stable IDs in
+`final-transcript.json`, or from finalized events in `live-transcript.jsonl` when no final
+transcript exists. Generated labels use `Speaker N` for `SPEAKER_NN` and `Unknown speaker` for
+`UNKNOWN`. This recovery is local and makes no server request.
+
+Transcript display resolves a turn's speaker in this order: current `speakers.json` name, current
+speaker label, the turn's nullable `speakerName` snapshot, the turn's stable `speakerId` (or legacy
+`speaker` field), then `UNKNOWN`. The server does not infer real names.
+
 ## Validation boundaries
 
 Every file must belong to the meeting named by its parent folder. Transcript turn `meetingId`

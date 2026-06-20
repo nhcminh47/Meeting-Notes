@@ -71,9 +71,10 @@ A `Speaker` separates stable transcript identity from a user-editable display na
 | `name` | string or null | Optional user-editable display name. |
 | `source` | string, optional | Provenance such as `live`, `final`, `manual`, or `imported`. |
 
-Renaming a speaker changes `name`, not `id`. Existing transcript turns continue to reference the
-stable ID. A rendered transcript should prefer the current speaker `name`, then `label`; the
-denormalized `speakerName` on a turn preserves the display name observed when that turn was saved.
+Renaming a speaker changes `name`, not `id`, and is performed locally without server inference.
+Existing transcript turns continue to reference the stable ID and are not rewritten. A rendered
+transcript resolves display text from the current speaker `name`, then `label`, then the turn's
+denormalized `speakerName`, then its stable `speakerId`/`speaker`, and finally `UNKNOWN`.
 
 Example `speakers.json`:
 

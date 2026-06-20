@@ -45,9 +45,16 @@ remain stable independently of server lifecycle.
 6. Render dialogue, notes, summaries, and exports from canonical turns. Derived files never replace
    those turns.
 
-Speaker renames update `speakers.json`. Renderers resolve the current name from that file while the
-turn's nullable `speakerName` remains a historical snapshot. Diarization, summary generation,
-export UI, and language-mode behavior are intentionally deferred to later issues.
+Speaker renames use narrow main-process IPC operations to read metadata, save a trimmed display
+name, or clear it to `null`. The main process validates the existing meeting folder, stable speaker
+ID, and name before atomically replacing `speakers.json`; the renderer receives no filesystem
+access. Rename never calls the server and never rewrites `live-transcript.jsonl` or
+`final-transcript.json`.
+
+Renderers resolve current display text from `speakers.json` name, speaker label, the turn's nullable
+`speakerName` snapshot, stable `speakerId`/`speaker`, then `UNKNOWN`. The server does not identify
+real people. Diarization, summary generation, export UI, and language-mode behavior are
+intentionally deferred to later issues.
 
 ## Remote credentials
 

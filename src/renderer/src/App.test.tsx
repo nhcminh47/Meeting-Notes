@@ -90,6 +90,11 @@ beforeEach(() => {
       stop: vi.fn(async () => ({ state: "stopped" as const, meetingId: "mtg_test", message: "Stopped." })),
       getStatus: vi.fn(async () => ({ state: "stopped" as const, meetingId: null, message: "Ready." })),
       onEvent: vi.fn(() => () => undefined)
+    },
+    speakers: {
+      getSpeakers: vi.fn(async (meetingId) => ({ schemaVersion: 1 as const, meetingId, speakers: [] })),
+      renameSpeaker: vi.fn(),
+      clearSpeakerName: vi.fn()
     }
   };
 });
