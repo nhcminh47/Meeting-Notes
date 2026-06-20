@@ -8,8 +8,12 @@ TEST_API_KEY = "unit-test-placeholder-key"
 
 
 @pytest.fixture
-def client() -> TestClient:
-    app.dependency_overrides[get_settings] = lambda: Settings(server_api_key=TEST_API_KEY)
+def client(tmp_path) -> TestClient:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        server_api_key=TEST_API_KEY,
+        live_fake_asr=True,
+        asr_tmp_dir=tmp_path / "asr-gateway-tests",
+    )
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

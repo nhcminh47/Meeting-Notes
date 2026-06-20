@@ -1,1 +1,1 @@
-"""Dev-only live transport probe."""
+"""Ephemeral English live ASR pipeline."""

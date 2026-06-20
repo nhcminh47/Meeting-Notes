@@ -28,17 +28,22 @@ Issue #15 establishes these JSON endpoints:
 Engine and model responses are configuration placeholders only. They do not indicate that ASR
 inference, streaming, or transcript jobs are available.
 
-## Live transport spike
+## English live ASR v1
 
-Issue #18 adds a dev-only transport probe at
-`WS /live/sessions/{sessionId}/stream`. It is not a production ASR endpoint and emits no transcript.
+The English live endpoint is `WS /live/sessions/{sessionId}/stream`. It accepts paced binary
+16 kHz mono signed 16-bit little-endian PCM. Clients must resample and downmix before sending;
+other formats are not negotiated in v1.
 
 The first client message must be `{"type":"auth","apiKey":"..."}`. Credentials in URL query
-parameters are rejected. After authentication, the server sends `session_started`, treats binary
-messages as test PCM chunks, and responds with cumulative `transport_probe` events. A JSON
-`{"type":"close"}` message returns `session_closed` and closes the socket. Authentication failures
-return a safe `UNAUTHORIZED` event and close the connection.
+parameters are rejected. The optional `language` field defaults to `en`; any other value is
+rejected, and Vietnamese realtime is not exposed. After authentication, the server sends
+`session_started`. A JSON `{"type":"close"}` message returns `session_closed` and closes the socket.
+Authentication failures return a safe `UNAUTHORIZED` event and close the connection.
 
-This first-message API-key flow is spike-only. Production live work should evaluate a short-lived,
-single-use stream token obtained through an HTTP endpoint protected by
-`Authorization: Bearer <apiKey>`.
+Transcript messages are speaker-turn dialogue. `partial` revises the current stable turn ID and
+has `isFinal: false`; `turn_final` commits that turn with `isFinal: true`, after which the next turn
+uses the next ID (`turn_001`, `turn_002`, and so on). Both include `speaker`, `start`, `end`, `text`,
+and `source: "live"`. V1 labels every turn `SPEAKER_01`; diarization is deferred.
+
+The server bounds audio in memory, enforces session concurrency and TTL settings, and clears the
+buffer on every close/error path. It writes no live audio or transcript to durable storage.

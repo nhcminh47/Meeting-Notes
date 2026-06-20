@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     live_audio_buffer_seconds: int = Field(default=30, ge=1)
     live_chunk_retention_seconds: int = Field(default=120, ge=1)
     live_session_ttl_minutes: int = Field(default=240, ge=1)
+    live_fake_asr: bool = False
     job_workspace_ttl_minutes: int = Field(default=30, ge=1)
     completed_job_ttl_minutes: int = Field(default=10, ge=1)
     failed_job_ttl_minutes: int = Field(default=30, ge=1)
