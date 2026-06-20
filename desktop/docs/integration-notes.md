@@ -40,3 +40,28 @@ safe settings operations and key-presence state, never the raw saved key or cred
 Future live and final ASR features must obtain their remote configuration through this settings
 layer. They must not duplicate credential handling or place the key in URLs, logs, renderer state,
 or durable meeting records.
+
+## Live transport spike
+
+The v1 transport decision is WebSocket PCM. The issue #18 probe is dev-only and is not wired into
+the recording UI. A future main-process client should derive `wss://.../live/sessions/{sessionId}/stream`
+from the saved server URL, send the API key only in the first auth message, clear any temporary key
+reference after authentication, and stream paced binary PCM chunks. It must never put the key in a
+query string or expose it through preload.
+
+For a manual fake-chunk probe, the intended browser-compatible sequence is:
+
+```js
+const socket = new WebSocket("wss://example.invalid/live/sessions/live_probe_001/stream")
+socket.addEventListener("open", () => {
+  socket.send(JSON.stringify({ type: "auth", apiKey: "<user-provided-api-key>" }))
+})
+socket.addEventListener("message", ({ data }) => console.log(JSON.parse(data)))
+// Send only after receiving session_started:
+socket.send(new Uint8Array([0, 0, 1, 0]).buffer)
+socket.send(JSON.stringify({ type: "close" }))
+```
+
+Production integration should replace the direct API-key message with a short-lived stream token
+if issue #19 adds the proposed token exchange. PCM format, pacing, limits, heartbeats, reconnects,
+and backpressure are deliberately deferred.
