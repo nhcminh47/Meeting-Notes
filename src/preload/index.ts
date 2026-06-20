@@ -75,6 +75,11 @@ const api: LocalStudioApi = {
     getSpeakers: (meetingId) => ipcRenderer.invoke("speakers:get", { meetingId }),
     renameSpeaker: (input) => ipcRenderer.invoke("speakers:rename", input),
     clearSpeakerName: (input) => ipcRenderer.invoke("speakers:clear-name", input)
+  },
+  meetingNotes: {
+    get: (input) => ipcRenderer.invoke("meeting-notes:get", input),
+    generate: (input) => ipcRenderer.invoke("meeting-notes:generate", input),
+    regenerate: (input) => ipcRenderer.invoke("meeting-notes:regenerate", input)
   }
 };
 

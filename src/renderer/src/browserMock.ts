@@ -157,6 +157,11 @@ const browserApi: LocalStudioApi = {
     getSpeakers: async (meetingId) => ({ schemaVersion: 1, meetingId, speakers: [] }),
     renameSpeaker: async (input) => ({ schemaVersion: 1, meetingId: input.meetingId, speakers: [] }),
     clearSpeakerName: async (input) => ({ schemaVersion: 1, meetingId: input.meetingId, speakers: [] })
+  },
+  meetingNotes: {
+    get: async () => null,
+    generate: async (input) => ({ meetingId: input.meetingId, status: "completed", source: "final-transcript.json", markdown: "# Meeting Note" }),
+    regenerate: async (input) => ({ meetingId: input.meetingId, status: "completed", source: "final-transcript.json", markdown: "# Meeting Note" })
   }
 };
 

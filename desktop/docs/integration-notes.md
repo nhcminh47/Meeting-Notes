@@ -56,6 +56,19 @@ Renderers resolve current display text from `speakers.json` name, speaker label,
 real people. Diarization, summary generation, export UI, and language-mode behavior are
 intentionally deferred to later issues.
 
+## Meeting note generation
+
+The renderer accesses notes through the narrow `meetingNotes.get`, `meetingNotes.generate`, and
+`meetingNotes.regenerate` preload methods. It receives markdown and safe status/error information,
+not meeting paths, credentials, or unrestricted filesystem access. Generation is explicitly
+triggered by the user and runs in the Electron main process.
+
+Only `final-transcript.json` is accepted by the default flow. Turns are ordered chronologically,
+empty text is ignored, timestamps are included, and speaker display names resolve through current
+`speakers.json` metadata. Missing, invalid, empty, or oversized final transcripts fail safely; live
+partial/final events are not an automatic fallback. The local template summarizer provides offline,
+deterministic output with the required sections. No cloud summarizer is configured in this issue.
+
 ## Remote credentials
 
 Remote credentials are user-provided through the desktop settings layer; no server URL or API key

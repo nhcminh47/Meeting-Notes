@@ -30,6 +30,7 @@ import {
 import { remoteSettingsService } from "./remote/remoteSettings";
 import { RemoteLiveSession } from "./remote/remoteLiveSession";
 import { clearSpeakerName, getSpeakers, renameSpeaker } from "./meetings/speakerStore";
+import { MeetingNoteService } from "./meetings/meetingNoteService";
 
 const selectedAudioPaths = new Set<string>();
 const managedAudioPaths = new Set<string>();
@@ -107,13 +108,14 @@ export const remoteLiveAudioSchema = z.instanceof(Uint8Array).refine(
   (chunk) => chunk.byteLength > 0 && chunk.byteLength <= 32000,
   "Live audio chunks must contain at most one second of PCM."
 );
-export const speakerMeetingSchema = z.object({ meetingId: z.string().min(1).max(128) });
+export const speakerMeetingSchema = z.object({ meetingId: z.string().regex(/^mtg_[A-Za-z0-9_-]+$/).max(128) }).strict();
 export const speakerMutationSchema = speakerMeetingSchema.extend({
   speakerId: z.string().min(1).max(32)
 });
 export const speakerRenameSchema = speakerMutationSchema.extend({
   name: z.string().max(256)
 });
+export const meetingNoteSchema = speakerMeetingSchema;
 
 function meetingsRoot(): string {
   return path.join(app.getPath("userData"), "meetings");
@@ -218,6 +220,18 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("speakers:clear-name", async (_event, rawInput: unknown) => {
     const input = speakerMutationSchema.parse(rawInput);
     return clearSpeakerName(meetingsRoot(), input);
+  });
+  ipcMain.handle("meeting-notes:get", async (_event, rawInput: unknown) => {
+    const input = meetingNoteSchema.parse(rawInput);
+    return new MeetingNoteService(meetingsRoot()).get(input.meetingId);
+  });
+  ipcMain.handle("meeting-notes:generate", async (_event, rawInput: unknown) => {
+    const input = meetingNoteSchema.parse(rawInput);
+    return new MeetingNoteService(meetingsRoot()).generate(input.meetingId);
+  });
+  ipcMain.handle("meeting-notes:regenerate", async (_event, rawInput: unknown) => {
+    const input = meetingNoteSchema.parse(rawInput);
+    return new MeetingNoteService(meetingsRoot()).generate(input.meetingId, true);
   });
   ipcMain.handle("runtime:get-status", async () => getRuntimeStatus());
   ipcMain.handle("runtime:ensure-required", async () => ensureRequiredRuntime());

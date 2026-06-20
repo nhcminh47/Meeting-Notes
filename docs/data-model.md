@@ -154,6 +154,11 @@ AppData/
 - `speakers.json` stores stable IDs and editable display names.
 - `meeting-note.md` and `exports/` contain derived artifacts that can be regenerated.
 
+`meeting-note.md` is generated from `final-transcript.json` speaker turns, with current display
+names resolved from `speakers.json`. It is never used as input to regenerate itself, and the live
+JSONL recovery log is not a default summary source. Regeneration replaces only this derived file;
+the canonical final transcript and append-only live transcript remain unchanged.
+
 ### Append-only live transcript
 
 Each complete line in `live-transcript.jsonl` is an independent JSON event. Writers append a

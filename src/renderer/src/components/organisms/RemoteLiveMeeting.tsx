@@ -3,6 +3,7 @@ import type { LiveConnectionEvent, LiveMeetingStatus } from "../../../../shared/
 import { resolveSpeakerDisplay, type Speaker } from "../../../../shared/speakers";
 import { Button } from "../atoms/Button";
 import { SpeakerRenamePanel } from "./SpeakerRenamePanel";
+import { MeetingNotePanel } from "./MeetingNotePanel";
 
 const INITIAL: LiveMeetingStatus = { state: "stopped", meetingId: null, message: "Ready." };
 
@@ -76,6 +77,7 @@ export function RemoteLiveMeeting() {
         </div>
       </div>
       {status.meetingId && <SpeakerRenamePanel meetingId={status.meetingId} onSpeakersChange={setSpeakers} />}
+      {status.meetingId && <MeetingNotePanel meetingId={status.meetingId} />}
     </section>
   );
 }

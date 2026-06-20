@@ -95,6 +95,11 @@ beforeEach(() => {
       getSpeakers: vi.fn(async (meetingId) => ({ schemaVersion: 1 as const, meetingId, speakers: [] })),
       renameSpeaker: vi.fn(),
       clearSpeakerName: vi.fn()
+    },
+    meetingNotes: {
+      get: vi.fn(async () => null),
+      generate: vi.fn(),
+      regenerate: vi.fn()
     }
   };
 });

@@ -40,6 +40,19 @@ artifact paths.
   final snapshot means the meeting is not finalized, regardless of stale metadata.
 - Treat `meeting-note.md` and everything in `exports/` as derived and regenerable.
 
+## Meeting note lifecycle
+
+`meeting-note.md` is a local derived artifact generated only from the ordered turns in
+`final-transcript.json`. The default generator never reads `live-transcript.jsonl`, existing notes,
+or bullet views as summary input. Current display names are resolved from `speakers.json` before
+generation, so a local speaker rename is reflected without rewriting the transcript.
+
+The default backend is deterministic and local; it requires no provider key and sends no dialogue
+off the machine. Dialogue input is capped at 500,000 characters and returns a safe error rather
+than truncating source material. The file is written through a temporary sibling and atomically
+renamed. Initial generation refuses to replace an existing note; the explicit regenerate action
+may overwrite it. Neither operation modifies final or live transcript files.
+
 ## Speaker metadata and rename lifecycle
 
 `speakers.json` is the local source of editable speaker display names. A rename trims and validates

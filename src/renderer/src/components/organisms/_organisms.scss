@@ -1607,6 +1607,34 @@
   }
 }
 
+.meeting-note {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e8c9a8;
+  border-radius: 1rem;
+  background: #fffaf2;
+
+  &__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  &__error { color: #a53c2c; }
+
+  &__preview {
+    max-height: 24rem;
+    overflow: auto;
+    padding: 0.9rem;
+    border-radius: 0.7rem;
+    white-space: pre-wrap;
+    color: #4f392d;
+    background: white;
+  }
+}
+
 @include compact {
   .live-transcript {
     &__controls {
