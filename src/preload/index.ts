@@ -70,6 +70,11 @@ const api: LocalStudioApi = {
       ipcRenderer.on("live-meeting:event", handler);
       return () => ipcRenderer.removeListener("live-meeting:event", handler);
     }
+  },
+  speakers: {
+    getSpeakers: (meetingId) => ipcRenderer.invoke("speakers:get", { meetingId }),
+    renameSpeaker: (input) => ipcRenderer.invoke("speakers:rename", input),
+    clearSpeakerName: (input) => ipcRenderer.invoke("speakers:clear-name", input)
   }
 };
 

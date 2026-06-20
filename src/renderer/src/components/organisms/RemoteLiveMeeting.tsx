@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { LiveConnectionEvent, LiveMeetingStatus } from "../../../../shared/apiTypes";
+import { resolveSpeakerDisplay, type Speaker } from "../../../../shared/speakers";
 import { Button } from "../atoms/Button";
+import { SpeakerRenamePanel } from "./SpeakerRenamePanel";
 
 const INITIAL: LiveMeetingStatus = { state: "stopped", meetingId: null, message: "Ready." };
 
@@ -8,6 +10,7 @@ export function RemoteLiveMeeting() {
   const [status, setStatus] = useState(INITIAL);
   const [partial, setPartial] = useState("");
   const [turns, setTurns] = useState<Extract<LiveConnectionEvent, { type: "turn_final" }>[] >([]);
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const timer = useRef<number | null>(null);
 
   function stopDevSource() {
@@ -69,9 +72,10 @@ export function RemoteLiveMeeting() {
       <div className="remote-live__transcripts">
         <div><strong>Partial (not saved)</strong><p>{partial || "Waiting for speech…"}</p></div>
         <div><strong>Final speaker turns (saved locally)</strong>
-          {turns.length ? <ol>{turns.map((turn) => <li key={turn.turnId}><b>{turn.speaker}</b> {turn.text}</li>)}</ol> : <p>No finalized turns yet.</p>}
+          {turns.length ? <ol>{turns.map((turn) => <li key={turn.turnId}><b>{resolveSpeakerDisplay(turn, speakers)}:</b> {turn.text}</li>)}</ol> : <p>No finalized turns yet.</p>}
         </div>
       </div>
+      {status.meetingId && <SpeakerRenamePanel meetingId={status.meetingId} onSpeakersChange={setSpeakers} />}
     </section>
   );
 }

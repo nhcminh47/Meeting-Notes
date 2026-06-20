@@ -1,4 +1,5 @@
 import type { RuntimeStatus } from "../main/runtime/runtimeTypes";
+import type { SpeakerFile } from "./speakers";
 
 export type AudioFileSelection = {
   path: string;
@@ -235,5 +236,10 @@ export type LocalStudioApi = {
     stop: () => Promise<LiveMeetingStatus>;
     getStatus: () => Promise<LiveMeetingStatus>;
     onEvent: (listener: (event: LiveMeetingEvent) => void) => () => void;
+  };
+  speakers: {
+    getSpeakers: (meetingId: string) => Promise<SpeakerFile>;
+    renameSpeaker: (input: { meetingId: string; speakerId: string; name: string }) => Promise<SpeakerFile>;
+    clearSpeakerName: (input: { meetingId: string; speakerId: string }) => Promise<SpeakerFile>;
   };
 };

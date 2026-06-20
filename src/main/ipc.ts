@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import type { IpcMainInvokeEvent } from "electron";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -29,6 +29,7 @@ import {
 } from "./transcription/transcriptionJobManager";
 import { remoteSettingsService } from "./remote/remoteSettings";
 import { RemoteLiveSession } from "./remote/remoteLiveSession";
+import { clearSpeakerName, getSpeakers, renameSpeaker } from "./meetings/speakerStore";
 
 const selectedAudioPaths = new Set<string>();
 const managedAudioPaths = new Set<string>();
@@ -106,6 +107,17 @@ export const remoteLiveAudioSchema = z.instanceof(Uint8Array).refine(
   (chunk) => chunk.byteLength > 0 && chunk.byteLength <= 32000,
   "Live audio chunks must contain at most one second of PCM."
 );
+export const speakerMeetingSchema = z.object({ meetingId: z.string().min(1).max(128) });
+export const speakerMutationSchema = speakerMeetingSchema.extend({
+  speakerId: z.string().min(1).max(32)
+});
+export const speakerRenameSchema = speakerMutationSchema.extend({
+  name: z.string().max(256)
+});
+
+function meetingsRoot(): string {
+  return path.join(app.getPath("userData"), "meetings");
+}
 
 const remoteLiveSession = new RemoteLiveSession((payload) => {
   for (const window of BrowserWindow.getAllWindows()) {
@@ -195,6 +207,18 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.handle("live-meeting:stop", async () => remoteLiveSession.stop());
   ipcMain.handle("live-meeting:get-status", async () => remoteLiveSession.getStatus());
+  ipcMain.handle("speakers:get", async (_event, rawInput: unknown) => {
+    const input = speakerMeetingSchema.parse(rawInput);
+    return getSpeakers(meetingsRoot(), input.meetingId);
+  });
+  ipcMain.handle("speakers:rename", async (_event, rawInput: unknown) => {
+    const input = speakerRenameSchema.parse(rawInput);
+    return renameSpeaker(meetingsRoot(), input);
+  });
+  ipcMain.handle("speakers:clear-name", async (_event, rawInput: unknown) => {
+    const input = speakerMutationSchema.parse(rawInput);
+    return clearSpeakerName(meetingsRoot(), input);
+  });
   ipcMain.handle("runtime:get-status", async () => getRuntimeStatus());
   ipcMain.handle("runtime:ensure-required", async () => ensureRequiredRuntime());
   ipcMain.handle("runtime:install-item", async (_event, itemId: unknown) => {
