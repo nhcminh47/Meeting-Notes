@@ -48,6 +48,15 @@ class TempWorkspaceManager:
     def get_job_workspace(self, job_id: str) -> Path | None:
         return self._get_workspace("job", job_id)
 
+    def get_job_metadata(self, job_id: str) -> WorkspaceMetadata | None:
+        workspace = self.get_job_workspace(job_id)
+        if workspace is None:
+            return None
+        try:
+            return self._read_metadata(workspace)
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            return None
+
     def mark_job_completed(self, job_id: str) -> None:
         self._mark_job(job_id, "completed", self.settings.completed_job_ttl_minutes)
 
