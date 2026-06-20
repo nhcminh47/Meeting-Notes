@@ -38,6 +38,7 @@ class FinalTranscriptResult(BaseModel):
     meetingId: str
     language: str
     generatedAt: str
+    diarizationStatus: Literal["unavailable", "failed", "empty", "applied"]
     turns: list[TranscriptTurn]
 
 

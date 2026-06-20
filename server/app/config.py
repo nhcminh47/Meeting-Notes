@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     live_session_ttl_minutes: int = Field(default=240, ge=1)
     live_fake_asr: bool = False
     final_fake_asr: bool = False
+    enable_final_diarization: bool = False
+    diarization_backend: str = "disabled"
+    diarization_model: str = ""
+    pyannote_auth_token: str = ""
     job_workspace_ttl_minutes: int = Field(default=30, ge=1)
     completed_job_ttl_minutes: int = Field(default=10, ge=1)
     failed_job_ttl_minutes: int = Field(default=30, ge=1)

@@ -68,6 +68,7 @@ def test_completed_job_status_and_normalized_result(client: TestClient) -> None:
     assert body["schemaVersion"] == 1
     assert body["meetingId"] == "mtg_test_001"
     assert body["language"] == "en"
+    assert body["diarizationStatus"] == "unavailable"
     assert [turn["id"] for turn in body["turns"]] == ["turn_001", "turn_002"]
     assert [turn["start"] for turn in body["turns"]] == sorted(
         turn["start"] for turn in body["turns"]
