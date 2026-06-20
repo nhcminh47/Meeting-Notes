@@ -138,6 +138,13 @@ const browserApi: LocalStudioApi = {
       events,
       logFilePath: "Browser preview - no persistent log file"
     })
+  },
+  remoteSettings: {
+    get: async () => ({ serverUrl: null, hasApiKey: false }),
+    save: async (input) => ({ serverUrl: input.serverUrl ?? null, hasApiKey: Boolean(input.apiKey) }),
+    clearApiKey: async () => ({ serverUrl: null, hasApiKey: false }),
+    clearAll: async () => ({ serverUrl: null, hasApiKey: false }),
+    testConnection: async () => ({ ok: true, status: "connected", message: "Connected to remote server." })
   }
 };
 

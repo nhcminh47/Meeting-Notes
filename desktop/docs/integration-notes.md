@@ -29,5 +29,14 @@ remain stable independently of server lifecycle.
 
 Speaker renames update `speakers.json`. Renderers resolve the current name from that file while the
 turn's nullable `speakerName` remains a historical snapshot. Diarization, summary generation,
-export UI, credential storage, and language-mode behavior are intentionally deferred to later
-issues.
+export UI, and language-mode behavior are intentionally deferred to later issues.
+
+## Remote credentials
+
+Remote credentials are user-provided through the desktop settings layer; no server URL or API key
+is hardcoded. Protected calls use `Authorization: Bearer <apiKey>`. The preload boundary exposes
+safe settings operations and key-presence state, never the raw saved key or credential storage.
+
+Future live and final ASR features must obtain their remote configuration through this settings
+layer. They must not duplicate credential handling or place the key in URLs, logs, renderer state,
+or durable meeting records.

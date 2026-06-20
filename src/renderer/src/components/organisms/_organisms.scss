@@ -1158,6 +1158,74 @@
   }
 }
 
+.remote-settings {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid #e7a76d;
+  border-radius: 1.1rem;
+  color: #5f3826;
+  background: linear-gradient(145deg, #fffaf0, #f8e2ca);
+  box-shadow: 0 8px 20px rgb(126 72 38 / 0.1);
+
+  &__heading,
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+  }
+
+  h2 { margin: 0; font-size: 1.05rem; }
+  .eyebrow { margin: 0 0 0.15rem; color: #a65b32; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; }
+
+  &__status {
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius-pill);
+    color: #73513e;
+    background: #f1e5d5;
+    font-size: 0.65rem;
+    font-weight: 750;
+  }
+  &__status--connected { color: #176e58; background: #dcf5eb; }
+  &__status--unauthorized,
+  &__status--invalid_url,
+  &__status--unreachable,
+  &__status--timeout,
+  &__status--error { color: #9d353c; background: #ffe3e4; }
+
+  &__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+
+    label { display: grid; gap: 0.3rem; font-size: 0.7rem; font-weight: 750; }
+    input {
+      min-width: 0;
+      min-height: 2.55rem;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid rgb(198 124 70 / 0.35);
+      border-radius: 0.65rem;
+      outline: 0;
+      color: #4d3022;
+      background: #fffaf0;
+    }
+    input:focus-visible { border-color: var(--color-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 18%, transparent); }
+    small { min-height: 0.8rem; color: var(--color-subtle); font-size: 0.58rem; font-weight: 500; }
+  }
+
+  &__actions { justify-content: flex-start; flex-wrap: wrap; }
+  &__error { margin: 0; color: #9d353c; font-size: 0.7rem; font-weight: 700; }
+}
+
+@include compact {
+  .remote-settings {
+    &__heading { align-items: flex-start; flex-direction: column; }
+    &__fields { grid-template-columns: 1fr; }
+    &__actions .button { width: 100%; }
+  }
+}
+
 .diagnostics-panel {
   padding: 0;
   overflow: hidden;

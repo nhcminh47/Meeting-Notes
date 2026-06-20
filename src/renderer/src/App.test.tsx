@@ -76,6 +76,13 @@ beforeEach(() => {
         events: [],
         logFilePath: "C:\\logs\\events.jsonl"
       }))
+    },
+    remoteSettings: {
+      get: vi.fn(async () => ({ serverUrl: null, hasApiKey: false })),
+      save: vi.fn(),
+      clearApiKey: vi.fn(),
+      clearAll: vi.fn(),
+      testConnection: vi.fn()
     }
   };
 });
