@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.5.0...v0.6.0) (2026-06-20)
+
+
+### Features
+
+* add live transcript ([009ef12](https://github.com/nhcminh47/Meeting-Notes/commit/009ef1292f2001d09283ad3081fe85de3cbb3c3a))
+* add live transcript ([#11](https://github.com/nhcminh47/Meeting-Notes/issues/11)) ([61dd1b9](https://github.com/nhcminh47/Meeting-Notes/commit/61dd1b9f36c6b94c5c86e7271ffc9e3466c66acc))
+* Add remote credential settings ([#37](https://github.com/nhcminh47/Meeting-Notes/issues/37)) ([bf2cfe5](https://github.com/nhcminh47/Meeting-Notes/commit/bf2cfe5a5c2c42fcb64340d93b874145db2ed740))
+* Implement English live ASR v1 ([#41](https://github.com/nhcminh47/Meeting-Notes/issues/41)) ([657625a](https://github.com/nhcminh47/Meeting-Notes/commit/657625aa6e9e784ee91f33178b76acf17c0ab369))
+* Implement ephemeral storage manager ([#35](https://github.com/nhcminh47/Meeting-Notes/issues/35)) ([917bf97](https://github.com/nhcminh47/Meeting-Notes/commit/917bf979c57ea0fb8aeefa16ea5004312f008b28))
+* Spike authenticated live transport ([#39](https://github.com/nhcminh47/Meeting-Notes/issues/39)) ([56f0414](https://github.com/nhcminh47/Meeting-Notes/commit/56f0414a8d69b494f09591fbbc7536cd7eb6217f))
+
 ## [0.5.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.4.0...v0.5.0) (2026-06-15)
 
 
