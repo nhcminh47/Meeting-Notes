@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.5.0...v0.6.0) (2026-06-20)
+
+
+### Features
+
+* add live transcript ([009ef12](https://github.com/nhcminh47/Meeting-Notes/commit/009ef1292f2001d09283ad3081fe85de3cbb3c3a))
+* add live transcript ([#11](https://github.com/nhcminh47/Meeting-Notes/issues/11)) ([61dd1b9](https://github.com/nhcminh47/Meeting-Notes/commit/61dd1b9f36c6b94c5c86e7271ffc9e3466c66acc))
+* Add remote credential settings ([#37](https://github.com/nhcminh47/Meeting-Notes/issues/37)) ([bf2cfe5](https://github.com/nhcminh47/Meeting-Notes/commit/bf2cfe5a5c2c42fcb64340d93b874145db2ed740))
+* Implement ephemeral storage manager ([#35](https://github.com/nhcminh47/Meeting-Notes/issues/35)) ([917bf97](https://github.com/nhcminh47/Meeting-Notes/commit/917bf979c57ea0fb8aeefa16ea5004312f008b28))
+
 ## [0.5.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.4.0...v0.5.0) (2026-06-15)
 
 
