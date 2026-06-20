@@ -6,8 +6,8 @@ placeholder endpoints, and managed ephemeral workspaces. It is not a meeting arc
 result, or job artifacts placed in these workspaces are temporary and must never be treated as
 durable meeting data.
 
-ASR inference, model downloads, streaming, transcript jobs, diarization, and desktop integration
-are intentionally not implemented in issue #15.
+ASR inference, model downloads, production streaming, transcript jobs, diarization, and desktop
+integration are not implemented. Issue #18 adds only a dev transport probe.
 
 ## Run locally
 
@@ -44,6 +44,18 @@ The request logger never records headers, bodies, audio, or transcript content.
 | `GET /models` | Bearer token | Configured model names |
 | `GET /admin/storage` | Bearer token | Safe temporary-storage usage and workspace counts |
 | `POST /admin/cleanup` | Bearer token | Run TTL and orphan cleanup and report safe totals |
+| `WS /live/sessions/{sessionId}/stream` | First-message API key | Dev-only binary transport probe |
+
+## Dev-only live transport probe
+
+Connect to `WS /live/sessions/{sessionId}/stream` without credentials in the URL. The first message
+must be `{"type":"auth","apiKey":"<user-provided-api-key>"}`. Once `session_started` is received,
+binary messages increment in-memory chunk and byte counters and return `transport_probe` JSON.
+Send `{"type":"close"}` for a clean `session_closed` response. Invalid authentication returns a
+safe error and closes with code 1008.
+
+This route does not inspect PCM, run ASR, log message bodies, or store chunks. The first-message
+API-key exchange is spike-only and may be replaced by short-lived stream tokens in production.
 
 ## Ephemeral temporary storage
 

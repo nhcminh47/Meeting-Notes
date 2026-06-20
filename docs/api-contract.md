@@ -27,3 +27,18 @@ Issue #15 establishes these JSON endpoints:
 
 Engine and model responses are configuration placeholders only. They do not indicate that ASR
 inference, streaming, or transcript jobs are available.
+
+## Live transport spike
+
+Issue #18 adds a dev-only transport probe at
+`WS /live/sessions/{sessionId}/stream`. It is not a production ASR endpoint and emits no transcript.
+
+The first client message must be `{"type":"auth","apiKey":"..."}`. Credentials in URL query
+parameters are rejected. After authentication, the server sends `session_started`, treats binary
+messages as test PCM chunks, and responds with cumulative `transport_probe` events. A JSON
+`{"type":"close"}` message returns `session_closed` and closes the socket. Authentication failures
+return a safe `UNAUTHORIZED` event and close the connection.
+
+This first-message API-key flow is spike-only. Production live work should evaluate a short-lived,
+single-use stream token obtained through an HTTP endpoint protected by
+`Authorization: Bearer <apiKey>`.
