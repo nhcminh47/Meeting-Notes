@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.5.0...v0.6.0) (2026-06-20)
+
+
+### Features
+
+* add live transcript ([009ef12](https://github.com/nhcminh47/Meeting-Notes/commit/009ef1292f2001d09283ad3081fe85de3cbb3c3a))
+* add live transcript ([#11](https://github.com/nhcminh47/Meeting-Notes/issues/11)) ([61dd1b9](https://github.com/nhcminh47/Meeting-Notes/commit/61dd1b9f36c6b94c5c86e7271ffc9e3466c66acc))
+* Add local speaker rename support ([#49](https://github.com/nhcminh47/Meeting-Notes/issues/49)) ([6363791](https://github.com/nhcminh47/Meeting-Notes/commit/63637916489648c4c3df9964b27d56d6267c6ef5))
+* Add remote credential settings ([#37](https://github.com/nhcminh47/Meeting-Notes/issues/37)) ([bf2cfe5](https://github.com/nhcminh47/Meeting-Notes/commit/bf2cfe5a5c2c42fcb64340d93b874145db2ed740))
+* Implement English live ASR v1 ([#41](https://github.com/nhcminh47/Meeting-Notes/issues/41)) ([657625a](https://github.com/nhcminh47/Meeting-Notes/commit/657625aa6e9e784ee91f33178b76acf17c0ab369))
+* Implement ephemeral storage manager ([#35](https://github.com/nhcminh47/Meeting-Notes/issues/35)) ([917bf97](https://github.com/nhcminh47/Meeting-Notes/commit/917bf979c57ea0fb8aeefa16ea5004312f008b28))
+* Implement final speaker-aware transcript ([#48](https://github.com/nhcminh47/Meeting-Notes/issues/48)) ([3b10cf0](https://github.com/nhcminh47/Meeting-Notes/commit/3b10cf0bc925b58419e5c109e4da8b4631d14801))
+* integrate remote English live meetings ([#45](https://github.com/nhcminh47/Meeting-Notes/issues/45)) ([0bdf21a](https://github.com/nhcminh47/Meeting-Notes/commit/0bdf21a3634fc291dbf277a85d2dfbaae513f0fe))
+* **server:** add final transcript job API ([#47](https://github.com/nhcminh47/Meeting-Notes/issues/47)) ([4fede0d](https://github.com/nhcminh47/Meeting-Notes/commit/4fede0d85ca4646d0a0998e32acaff79b651d5f5))
+* **server:** implement speaker turn builder ([#43](https://github.com/nhcminh47/Meeting-Notes/issues/43)) ([3cb3836](https://github.com/nhcminh47/Meeting-Notes/commit/3cb38360ed6cc60a3bc332dd3bd0bd01fb473652))
+* Spike authenticated live transport ([#39](https://github.com/nhcminh47/Meeting-Notes/issues/39)) ([56f0414](https://github.com/nhcminh47/Meeting-Notes/commit/56f0414a8d69b494f09591fbbc7536cd7eb6217f))
+
 ## [0.5.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.4.0...v0.5.0) (2026-06-15)
 
 
