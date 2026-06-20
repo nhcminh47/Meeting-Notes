@@ -6,8 +6,8 @@ placeholder endpoints, and managed ephemeral workspaces. It is not a meeting arc
 result, or job artifacts placed in these workspaces are temporary and must never be treated as
 durable meeting data.
 
-ASR inference, model downloads, production streaming, transcript jobs, diarization, and desktop
-integration are not implemented. Issue #18 adds only a dev transport probe.
+English live ASR v1 is implemented over authenticated WebSocket PCM. Final transcript jobs,
+diarization, model downloads, and production desktop integration are not implemented.
 
 ## Run locally
 
@@ -21,6 +21,11 @@ pip install -e ".[dev]"
 $env:SERVER_API_KEY = "replace-with-a-local-development-key"
 uvicorn app.main:app --reload
 ```
+
+For real live ASR, install `pip install -e ".[dev,live]"`. The default backend lazily loads
+`faster-whisper` model `small.en`; model acquisition and device selection follow faster-whisper's
+runtime behavior. Set `LIVE_FAKE_ASR=true` only for tests or deliberate transport development; the
+server never silently substitutes fake transcripts when the real backend is unavailable.
 
 Run tests with `pytest`. The public health endpoint is available at
 `http://localhost:8000/health`.
@@ -44,18 +49,26 @@ The request logger never records headers, bodies, audio, or transcript content.
 | `GET /models` | Bearer token | Configured model names |
 | `GET /admin/storage` | Bearer token | Safe temporary-storage usage and workspace counts |
 | `POST /admin/cleanup` | Bearer token | Run TTL and orphan cleanup and report safe totals |
-| `WS /live/sessions/{sessionId}/stream` | First-message API key | Dev-only binary transport probe |
+| `WS /live/sessions/{sessionId}/stream` | First-message API key | English live ASR over binary PCM |
 
-## Dev-only live transport probe
+## English live ASR v1
 
 Connect to `WS /live/sessions/{sessionId}/stream` without credentials in the URL. The first message
-must be `{"type":"auth","apiKey":"<user-provided-api-key>"}`. Once `session_started` is received,
-binary messages increment in-memory chunk and byte counters and return `transport_probe` JSON.
-Send `{"type":"close"}` for a clean `session_closed` response. Invalid authentication returns a
-safe error and closes with code 1008.
+must be `{"type":"auth","apiKey":"<user-provided-api-key>","language":"en"}`. `language` may be
+omitted and defaults to English. Vietnamese and every non-English live mode are rejected. Once
+`session_started` is received, send paced binary chunks containing 16 kHz mono signed 16-bit
+little-endian PCM. Send `{"type":"close"}` for a clean `session_closed` response.
 
-This route does not inspect PCM, run ASR, log message bodies, or store chunks. The first-message
-API-key exchange is spike-only and may be replaced by short-lived stream tokens in production.
+The server emits `partial` events for revisable text and `turn_final` for committed dialogue. A
+turn keeps one stable ID until committed; IDs then increment. V1 uses `SPEAKER_01` for every turn
+and performs no diarization. Chunks are passed directly to the backend (simple chunk boundaries plus
+faster-whisper VAD); the server does not yet resample, negotiate formats, merge overlapping context,
+or provide reconnect/resume semantics.
+
+Audio is retained only in a bounded in-memory buffer and cleared on clean close, disconnect,
+timeout, or error. Audio, auth payloads, and transcript text are not logged or written to workspace
+storage. `MAX_CONCURRENT_LIVE_SESSIONS`, `LIVE_AUDIO_BUFFER_SECONDS`, and
+`LIVE_SESSION_TTL_MINUTES` bound live resource use.
 
 ## Ephemeral temporary storage
 

@@ -80,15 +80,15 @@ WebSocket PCM is selected for v1 because it has the smallest dependency and depl
 fits the current FastAPI gateway, crosses Cloudflare Tunnel cleanly, and is easy to test and debug.
 WebRTC can be revisited after the live English pipeline exposes measured shortcomings.
 
-This probe intentionally has no PCM format negotiation, chunk/rate limit, bounded queue, heartbeat,
-resume protocol, stream-token exchange, ASR, or production Electron UI. A slow or malicious client
-still needs production-grade resource and concurrency controls. The probe keeps no durable state and
-cannot recover a disconnected session.
+Issue #19 builds on the selected transport with bounded in-memory PCM buffering, English ASR,
+speaker-turn events, concurrency limits, and session TTL cleanup. V1 still has no format
+negotiation, heartbeat, resume protocol, short-lived stream-token exchange, production Electron UI,
+or diarization. It cannot recover a disconnected session.
 
-## Follow-up for issue #19
+## Issue #19 pipeline
 
-Issue #19 should define sample format and chunk cadence, add bounded buffering and backpressure,
-enforce message/rate/session limits, establish heartbeat and reconnect semantics, and feed temporary
-audio frames into English live ASR. It should also add the short-lived stream-token exchange or
-formally harden first-message authentication. Any audio remains ephemeral; finalized speaker-turn
-dialogue remains owned and persisted by the desktop application.
+Clients send paced 16 kHz mono signed 16-bit little-endian PCM binary chunks. The server keeps only
+the configured recent window in memory and feeds each chunk to the configured backend. The optional
+`faster-whisper` backend forces English transcription and enables its VAD filter. The explicit fake
+backend is deterministic and exists only for CI and transport development. Any audio remains
+ephemeral; finalized speaker-turn dialogue remains owned and persisted by the desktop application.

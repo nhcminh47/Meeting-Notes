@@ -14,4 +14,4 @@ async def live_pcm_stream(
     session_id: str,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> None:
-    await handle_pcm_stream(websocket, session_id, settings.server_api_key)
+    await handle_pcm_stream(websocket, session_id, settings)

@@ -14,6 +14,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+live = [
+  "faster-whisper>=1.1,<2",
+  "numpy>=1.26,<3",
+]
 dev = [
   "httpx>=0.28,<1",
   "pytest>=8.3,<9",
