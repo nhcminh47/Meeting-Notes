@@ -61,9 +61,17 @@ little-endian PCM. Send `{"type":"close"}` for a clean `session_closed` response
 
 The server emits `partial` events for revisable text and `turn_final` for committed dialogue. A
 turn keeps one stable ID until committed; IDs then increment. V1 uses `SPEAKER_01` for every turn
-and performs no diarization. Chunks are passed directly to the backend (simple chunk boundaries plus
+and performs no diarization. Empty or whitespace-only backend results are ignored. The reusable
+speaker turn builder commits each final ASR segment as one turn and does not merge adjacent final
+segments in v1. Chunks are passed directly to the backend (simple chunk boundaries plus
 faster-whisper VAD); the server does not yet resample, negotiate formats, merge overlapping context,
 or provide reconnect/resume semantics.
+
+Every transcript event contains `sessionId`, `turnId`, `speaker`, `start`, `end`, `text`,
+`source: "live"`, and `isFinal`. Partial events keep `isFinal: false`, reuse the current turn ID,
+and do not advance the committed counter. They are intended for transient UI display. Final events
+use `type: "turn_final"` and `isFinal: true`; these are the events the desktop can translate and
+append to its locally owned `live-transcript.jsonl`. The server does not persist either form.
 
 Audio is retained only in a bounded in-memory buffer and cleared on clean close, disconnect,
 timeout, or error. Audio, auth payloads, and transcript text are not logged or written to workspace
