@@ -27,6 +27,7 @@ import {
   startTranscriptionJob,
   stopTranscriptionJob
 } from "./transcription/transcriptionJobManager";
+import { remoteSettingsService } from "./remote/remoteSettings";
 
 const selectedAudioPaths = new Set<string>();
 const managedAudioPaths = new Set<string>();
@@ -96,6 +97,10 @@ export const finishLiveTranscriptSessionSchema = z.object({
   finalText: z.string().max(5_000_000),
   saveTranscript: z.boolean().optional()
 });
+export const remoteSettingsInputSchema = z.object({
+  serverUrl: z.string().max(2048).optional(),
+  apiKey: z.string().max(4096).optional()
+});
 
 const ALLOWED_AUDIO_EXTENSIONS = new Set([
   ".wav",
@@ -156,6 +161,19 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle("diagnostics:get-events", async () => getLogSnapshot());
+  ipcMain.handle("remote-settings:get", async () => remoteSettingsService.get());
+  ipcMain.handle("remote-settings:save", async (_event, input: unknown) =>
+    remoteSettingsService.save(remoteSettingsInputSchema.parse(input))
+  );
+  ipcMain.handle("remote-settings:clear-api-key", async () =>
+    remoteSettingsService.clearApiKey()
+  );
+  ipcMain.handle("remote-settings:clear-all", async () =>
+    remoteSettingsService.clearAll()
+  );
+  ipcMain.handle("remote-settings:test-connection", async (_event, input: unknown) =>
+    remoteSettingsService.testConnection(remoteSettingsInputSchema.parse(input))
+  );
   ipcMain.handle("runtime:get-status", async () => getRuntimeStatus());
   ipcMain.handle("runtime:ensure-required", async () => ensureRequiredRuntime());
   ipcMain.handle("runtime:install-item", async (_event, itemId: unknown) => {

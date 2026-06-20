@@ -147,6 +147,24 @@ export type LogSnapshot = {
   logFilePath: string;
 };
 
+export type RemoteSettingsView = {
+  serverUrl: string | null;
+  hasApiKey: boolean;
+};
+
+export type RemoteSettingsInput = {
+  serverUrl?: string;
+  apiKey?: string;
+};
+
+export type RemoteConnectionStatus =
+  | { ok: true; status: "connected"; message: string }
+  | {
+      ok: false;
+      status: "invalid_url" | "unauthorized" | "unreachable" | "timeout" | "error";
+      message: string;
+    };
+
 export type LocalStudioApi = {
   windowControls: {
     minimize: () => Promise<void>;
@@ -190,5 +208,12 @@ export type LocalStudioApi = {
   };
   diagnostics: {
     getEvents: () => Promise<LogSnapshot>;
+  };
+  remoteSettings: {
+    get: () => Promise<RemoteSettingsView>;
+    save: (input: RemoteSettingsInput) => Promise<RemoteSettingsView>;
+    clearApiKey: () => Promise<RemoteSettingsView>;
+    clearAll: () => Promise<RemoteSettingsView>;
+    testConnection: (input: RemoteSettingsInput) => Promise<RemoteConnectionStatus>;
   };
 };

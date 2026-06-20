@@ -55,7 +55,8 @@ function createApi(): LocalStudioApi {
     },
     transcribe: {} as LocalStudioApi["transcribe"],
     liveTranscript: {} as LocalStudioApi["liveTranscript"],
-    diagnostics: {} as LocalStudioApi["diagnostics"]
+    diagnostics: {} as LocalStudioApi["diagnostics"],
+    remoteSettings: {} as LocalStudioApi["remoteSettings"]
   };
 }
 

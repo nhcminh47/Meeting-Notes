@@ -51,6 +51,14 @@ const api: LocalStudioApi = {
   },
   diagnostics: {
     getEvents: () => ipcRenderer.invoke("diagnostics:get-events")
+  },
+  remoteSettings: {
+    get: () => ipcRenderer.invoke("remote-settings:get"),
+    save: (input) => ipcRenderer.invoke("remote-settings:save", input),
+    clearApiKey: () => ipcRenderer.invoke("remote-settings:clear-api-key"),
+    clearAll: () => ipcRenderer.invoke("remote-settings:clear-all"),
+    testConnection: (input) =>
+      ipcRenderer.invoke("remote-settings:test-connection", input)
   }
 };
 

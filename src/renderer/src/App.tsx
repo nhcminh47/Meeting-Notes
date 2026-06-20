@@ -17,6 +17,7 @@ import type { LiveTranscriptState } from "./components/organisms/LiveTranscriptR
 import { TranscriptResultPanel } from "./components/organisms/TranscriptResultPanel";
 import { DiagnosticsPanel } from "./components/organisms/DiagnosticsPanel";
 import { WindowTitlebar } from "./components/organisms/WindowTitlebar";
+import { RemoteServerSettings } from "./components/organisms/RemoteServerSettings";
 import appPawIcon from "./assets/icons/app-paw.png";
 import studioHomeIcon from "./assets/icons/studio-home.png";
 
@@ -343,6 +344,7 @@ export default function App() {
           <div className="workflow-stack">
             {workspace}
             {runtimePanel}
+            <RemoteServerSettings />
           </div>
           {(text || outputFiles.length > 0) && (
             <TranscriptResultPanel
