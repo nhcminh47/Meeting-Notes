@@ -165,6 +165,19 @@ export type RemoteConnectionStatus =
       message: string;
     };
 
+export type LiveConnectionEvent =
+  | { type: "session_started"; sessionId: string }
+  | { type: "partial"; sessionId: string; turnId: string; speaker: string; start: number; end: number; text: string; source: "live"; isFinal: false }
+  | { type: "turn_final"; sessionId: string; turnId: string; speaker: string; start: number; end: number; text: string; source: "live"; isFinal: true }
+  | { type: "session_closed"; sessionId: string }
+  | { type: "error"; code: string; message: string };
+
+export type LiveMeetingState = "not_configured" | "connecting" | "connected" | "recording" | "stopping" | "stopped" | "error";
+export type LiveMeetingStatus = { state: LiveMeetingState; meetingId: string | null; message: string };
+export type LiveMeetingEvent =
+  | { type: "status"; status: LiveMeetingStatus }
+  | { type: "connection"; event: LiveConnectionEvent };
+
 export type LocalStudioApi = {
   windowControls: {
     minimize: () => Promise<void>;
@@ -215,5 +228,12 @@ export type LocalStudioApi = {
     clearApiKey: () => Promise<RemoteSettingsView>;
     clearAll: () => Promise<RemoteSettingsView>;
     testConnection: (input: RemoteSettingsInput) => Promise<RemoteConnectionStatus>;
+  };
+  liveMeeting: {
+    startRemoteEnglishMeeting: () => Promise<LiveMeetingStatus>;
+    sendAudioChunk: (chunk: Uint8Array) => Promise<void>;
+    stop: () => Promise<LiveMeetingStatus>;
+    getStatus: () => Promise<LiveMeetingStatus>;
+    onEvent: (listener: (event: LiveMeetingEvent) => void) => () => void;
   };
 };

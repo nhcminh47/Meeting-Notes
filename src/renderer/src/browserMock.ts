@@ -145,6 +145,13 @@ const browserApi: LocalStudioApi = {
     clearApiKey: async () => ({ serverUrl: null, hasApiKey: false }),
     clearAll: async () => ({ serverUrl: null, hasApiKey: false }),
     testConnection: async () => ({ ok: true, status: "connected", message: "Connected to remote server." })
+  },
+  liveMeeting: {
+    startRemoteEnglishMeeting: async () => ({ state: "recording", meetingId: "mtg_browser_preview", message: "Development PCM source is streaming." }),
+    sendAudioChunk: async () => undefined,
+    stop: async () => ({ state: "stopped", meetingId: "mtg_browser_preview", message: "Live meeting stopped." }),
+    getStatus: async () => ({ state: "stopped", meetingId: null, message: "Ready." }),
+    onEvent: () => () => undefined
   }
 };
 

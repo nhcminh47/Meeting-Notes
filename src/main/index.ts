@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell } from "electron";
 import path from "node:path";
 import { electronApp, is } from "@electron-toolkit/utils";
-import { registerIpcHandlers } from "./ipc";
+import { registerIpcHandlers, stopRemoteLiveMeeting } from "./ipc";
 import { logEvent, setEventLogRoot } from "./eventLogger";
 import { cancelAllLiveTranscriptSessions } from "./transcription/liveTranscriptSessionManager";
 
@@ -104,4 +104,5 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   void cancelAllLiveTranscriptSessions();
+  void stopRemoteLiveMeeting();
 });
