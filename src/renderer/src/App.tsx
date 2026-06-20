@@ -18,6 +18,7 @@ import { TranscriptResultPanel } from "./components/organisms/TranscriptResultPa
 import { DiagnosticsPanel } from "./components/organisms/DiagnosticsPanel";
 import { WindowTitlebar } from "./components/organisms/WindowTitlebar";
 import { RemoteServerSettings } from "./components/organisms/RemoteServerSettings";
+import { RemoteLiveMeeting } from "./components/organisms/RemoteLiveMeeting";
 import appPawIcon from "./assets/icons/app-paw.png";
 import studioHomeIcon from "./assets/icons/studio-home.png";
 
@@ -345,6 +346,7 @@ export default function App() {
             {workspace}
             {runtimePanel}
             <RemoteServerSettings />
+            <RemoteLiveMeeting />
           </div>
           {(text || outputFiles.length > 0) && (
             <TranscriptResultPanel

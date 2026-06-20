@@ -28,6 +28,7 @@ import {
   stopTranscriptionJob
 } from "./transcription/transcriptionJobManager";
 import { remoteSettingsService } from "./remote/remoteSettings";
+import { RemoteLiveSession } from "./remote/remoteLiveSession";
 
 const selectedAudioPaths = new Set<string>();
 const managedAudioPaths = new Set<string>();
@@ -101,6 +102,20 @@ export const remoteSettingsInputSchema = z.object({
   serverUrl: z.string().max(2048).optional(),
   apiKey: z.string().max(4096).optional()
 });
+export const remoteLiveAudioSchema = z.instanceof(Uint8Array).refine(
+  (chunk) => chunk.byteLength > 0 && chunk.byteLength <= 32000,
+  "Live audio chunks must contain at most one second of PCM."
+);
+
+const remoteLiveSession = new RemoteLiveSession((payload) => {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed()) window.webContents.send("live-meeting:event", payload);
+  }
+});
+
+export async function stopRemoteLiveMeeting(): Promise<void> {
+  await remoteLiveSession.stop();
+}
 
 const ALLOWED_AUDIO_EXTENSIONS = new Set([
   ".wav",
@@ -174,6 +189,12 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("remote-settings:test-connection", async (_event, input: unknown) =>
     remoteSettingsService.testConnection(remoteSettingsInputSchema.parse(input))
   );
+  ipcMain.handle("live-meeting:start", async () => remoteLiveSession.start());
+  ipcMain.handle("live-meeting:send-audio", async (_event, chunk: unknown) =>
+    remoteLiveSession.sendAudio(remoteLiveAudioSchema.parse(chunk))
+  );
+  ipcMain.handle("live-meeting:stop", async () => remoteLiveSession.stop());
+  ipcMain.handle("live-meeting:get-status", async () => remoteLiveSession.getStatus());
   ipcMain.handle("runtime:get-status", async () => getRuntimeStatus());
   ipcMain.handle("runtime:ensure-required", async () => ensureRequiredRuntime());
   ipcMain.handle("runtime:install-item", async (_event, itemId: unknown) => {

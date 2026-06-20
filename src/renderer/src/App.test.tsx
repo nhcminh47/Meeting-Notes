@@ -83,6 +83,13 @@ beforeEach(() => {
       clearApiKey: vi.fn(),
       clearAll: vi.fn(),
       testConnection: vi.fn()
+    },
+    liveMeeting: {
+      startRemoteEnglishMeeting: vi.fn(async () => ({ state: "recording" as const, meetingId: "mtg_test", message: "Streaming." })),
+      sendAudioChunk: vi.fn(async () => undefined),
+      stop: vi.fn(async () => ({ state: "stopped" as const, meetingId: "mtg_test", message: "Stopped." })),
+      getStatus: vi.fn(async () => ({ state: "stopped" as const, meetingId: null, message: "Ready." })),
+      onEvent: vi.fn(() => () => undefined)
     }
   };
 });

@@ -1,5 +1,23 @@
 # Desktop Integration Notes
 
+## Remote English Live Meeting
+
+The desktop main process owns the remote live session. It reads the saved server URL and API key,
+creates a local meeting, converts the configured HTTP(S) base URL to the matching WS(S) endpoint,
+and sends the API key only in the first WebSocket `auth` message. The renderer receives status and
+transcript events through a narrow preload API; it never receives credentials or filesystem paths.
+
+`partial` events are held in renderer memory and shown separately. Valid `turn_final` events are
+serialized by the main process and newline-appended to the meeting's `live-transcript.jsonl`.
+Malformed and unknown events are ignored. Stop sends the protocol `close` control, briefly waits
+for `session_closed`, closes the socket, drains pending local writes, and marks metadata complete.
+
+The current panel uses an explicitly labeled development-only source that sends silent, paced
+16 kHz mono signed 16-bit PCM through the real transport. This verifies auth, transport, event,
+IPC, and persistence without a GPU in tests. Browser microphone capture into this exact PCM format
+and retained `recording.wav` creation remain pending; this mode must not be presented as microphone
+recording until those pieces are connected.
+
 The Electron main process will eventually coordinate recording, optional remote processing, and
 local persistence. The renderer should request operations through a narrow IPC boundary rather
 than receiving unrestricted filesystem access.

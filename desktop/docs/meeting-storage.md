@@ -1,5 +1,17 @@
 # Meeting Storage
 
+## Remote live creation and recovery
+
+Starting Remote English Live Meeting creates `<userData>/meetings/<meeting-id>/` with
+`metadata.json`, `speakers.json`, and an empty `live-transcript.jsonl`. Speaker metadata starts with
+`SPEAKER_01` and `UNKNOWN`; no names or diarization are inferred. Meeting paths are relative and no
+API key, authorization payload, server temporary path, or audio content is written to metadata.
+
+Only validated `turn_final` events are appended, one newline-terminated JSON object per line.
+Partial events are UI-only. Writes are serialized to preserve event order and never rewrite prior
+lines. The development PCM source does not currently create `recording.wav`; local recording is a
+known follow-up. Final transcript, notes, and exports remain outside this integration.
+
 This document translates the [meeting data model](../../docs/data-model.md) into desktop storage
 rules. It is a contract for future Electron implementation, not production storage code.
 

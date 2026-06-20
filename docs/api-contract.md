@@ -83,5 +83,10 @@ Only `turn_final` events are suitable for the desktop's append-only `live-transc
 may translate the temporary server `sessionId` correlation field to its locally owned `meetingId`
 when persisting a finalized turn.
 
+The desktop derives this endpoint from the saved HTTP(S) server base URL by switching only the
+scheme to WS(S) and appending the session route. It clears any query or fragment and never places
+the API key in the URL. Renderer-facing clients receive safe status/event data only; credential
+lookup and the authentication message remain in the Electron main process.
+
 The server bounds audio in memory, enforces session concurrency and TTL settings, and clears the
 buffer on every close/error path. It writes no live audio or transcript to durable storage.

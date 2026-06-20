@@ -1,5 +1,11 @@
 # Credential Storage
 
+Remote live sessions read the URL and API key from the existing main-process credential store.
+The API key is used only to construct the first WebSocket authentication message. It is not added
+to the URL, copied into renderer-facing state, persisted in meeting files, or included in logs.
+Missing credentials produce the safe `not_configured` state. Authentication and network failures
+are mapped to fixed user-facing messages rather than forwarding server or auth payload details.
+
 The **Remote Server** settings UI accepts a user-provided server URL and API key. Neither value is
 hardcoded, and the API key is never logged.
 

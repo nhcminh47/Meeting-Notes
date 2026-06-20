@@ -59,6 +59,17 @@ const api: LocalStudioApi = {
     clearAll: () => ipcRenderer.invoke("remote-settings:clear-all"),
     testConnection: (input) =>
       ipcRenderer.invoke("remote-settings:test-connection", input)
+  },
+  liveMeeting: {
+    startRemoteEnglishMeeting: () => ipcRenderer.invoke("live-meeting:start"),
+    sendAudioChunk: (chunk) => ipcRenderer.invoke("live-meeting:send-audio", chunk),
+    stop: () => ipcRenderer.invoke("live-meeting:stop"),
+    getStatus: () => ipcRenderer.invoke("live-meeting:get-status"),
+    onEvent: (listener) => {
+      const handler = (_event: Electron.IpcRendererEvent, payload: Parameters<typeof listener>[0]) => listener(payload);
+      ipcRenderer.on("live-meeting:event", handler);
+      return () => ipcRenderer.removeListener("live-meeting:event", handler);
+    }
   }
 };
 
