@@ -8,8 +8,10 @@ from pathlib import Path
 
 from app.config import Settings
 from app.errors import ApiError
-from app.jobs.final_transcript import create_final_transcript_backend
-from app.jobs.models import FinalTranscriptResult, TranscriptTurn
+from app.jobs.diarization import DiarizationBackend, create_diarization_backend
+from app.jobs.final_transcript import FinalTranscriptBackend, create_final_transcript_backend
+from app.jobs.models import DiarizationStatus, FinalTranscriptResult, TranscriptTurn
+from app.jobs.speaker_mapper import map_speakers_by_overlap, validate_speaker_segments
 from app.storage import TempWorkspaceManager
 from app.storage.models import format_datetime, utc_now
 
@@ -19,10 +21,18 @@ _RESULT_FILE = "result.json"
 class FinalJobManager:
     """Runs final ASR jobs and keeps all artifacts in managed ephemeral workspaces."""
 
-    def __init__(self, settings: Settings):
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        asr_backend: FinalTranscriptBackend | None = None,
+        diarization_backend: DiarizationBackend | None = None,
+    ):
         self.settings = settings
         self.storage = TempWorkspaceManager(settings)
         self._slots = threading.BoundedSemaphore(settings.max_concurrent_jobs)
+        self._asr_backend = asr_backend
+        self._diarization_backend = diarization_backend
 
     def create_and_run(
         self, input_path: Path, *, job_id: str, meeting_id: str, language: str
@@ -30,7 +40,7 @@ class FinalJobManager:
         if not self._slots.acquire(blocking=False):
             raise ApiError(429, "JOB_CONCURRENCY_LIMIT", "Too many transcript jobs are running.")
         try:
-            backend = create_final_transcript_backend(self.settings)
+            backend = self._asr_backend or create_final_transcript_backend(self.settings)
             segments = backend.transcribe_file(
                 input_path, meeting_id=meeting_id, language=language
             )
@@ -38,17 +48,19 @@ class FinalJobManager:
             if metadata is None or metadata.status == "cancelled":
                 raise ApiError(409, "JOB_CANCELLED", "Transcript job was cancelled.")
             ordered = sorted(segments, key=lambda segment: (segment.start, segment.end))
+            diarization_status, speaker_ids = self._speaker_ids(input_path, ordered)
             result = FinalTranscriptResult(
                 schemaVersion=1,
                 jobId=job_id,
                 meetingId=meeting_id,
                 language=language,
                 generatedAt=format_datetime(utc_now()),
+                diarizationStatus=diarization_status,
                 turns=[
                     TranscriptTurn(
                         id=f"turn_{index:03d}",
                         meetingId=meeting_id,
-                        speakerId="SPEAKER_01",
+                        speakerId=speaker_ids[index - 1],
                         speakerName=None,
                         start=segment.start,
                         end=segment.end,
@@ -74,6 +86,23 @@ class FinalJobManager:
             if self.settings.delete_input_after_job:
                 input_path.unlink(missing_ok=True)
             self._slots.release()
+
+    def _speaker_ids(self, input_path: Path, segments: list) -> tuple[DiarizationStatus, list[str]]:
+        fallback = ["SPEAKER_01"] * len(segments)
+        if not self.settings.enable_final_diarization:
+            return "unavailable", fallback
+        backend = self._diarization_backend or create_diarization_backend(self.settings)
+        if not backend.available:
+            return "unavailable", fallback
+        try:
+            diarization = validate_speaker_segments(backend.diarize(input_path))
+        except Exception:
+            return "failed", fallback
+        if diarization is None:
+            return "failed", fallback
+        if not diarization:
+            return "empty", fallback
+        return "applied", map_speakers_by_overlap(segments, diarization)
 
     def status(self, job_id: str) -> dict[str, object]:
         metadata = self.storage.get_job_metadata(job_id)

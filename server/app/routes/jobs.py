@@ -24,7 +24,7 @@ _AUDIO_EXTENSIONS = {
     ".wav",
     ".webm",
 }
-_managers: dict[tuple[str, int, bool, bool, bool, str, str], FinalJobManager] = {}
+_managers: dict[tuple[object, ...], FinalJobManager] = {}
 _managers_lock = Lock()
 
 
@@ -39,6 +39,9 @@ def get_final_job_manager(
         settings.final_fake_asr,
         settings.default_final_engine,
         settings.default_final_model,
+        settings.enable_final_diarization,
+        settings.diarization_backend,
+        settings.diarization_model,
     )
     with _managers_lock:
         if key not in _managers:

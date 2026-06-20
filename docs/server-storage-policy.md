@@ -36,3 +36,8 @@ Completed and failed workspaces remain only until `COMPLETED_JOB_TTL_MINUTES` an
 With `DELETE_RESULT_AFTER_READ=true`, a successful result read removes `result.json`; workspace
 metadata remains until TTL cleanup so status remains safely observable. Cleanup stays scoped to
 the manager-owned jobs root and is safe to repeat.
+
+Optional diarization runs against the same temporary input inside the job workspace. Any future
+backend intermediates must remain there and follow the same deletion and TTL rules. The public
+result contains speaker turns and a safe diarization status, never temporary paths or backend
+diagnostics.

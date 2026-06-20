@@ -7,8 +7,9 @@ result, or job artifacts placed in these workspaces are temporary and must never
 durable meeting data.
 
 English live ASR v1 is implemented over authenticated WebSocket PCM. The final transcript job API
-provides single-speaker English batch ASR. Diarization, model downloads, and production desktop
-final-transcript integration are not implemented.
+provides English batch ASR with optional speaker-aware post-processing and safe single-speaker
+fallback. A real diarization adapter, model downloads, and production desktop final-transcript
+integration are not yet packaged.
 
 ## Run locally
 
@@ -95,9 +96,28 @@ distributed coordination is not yet provided.
 `FINAL_FAKE_ASR=true`, producing deterministic dialogue without a GPU or model download. This is
 never an automatic production fallback.
 
-Results contain ordered turns with stable incremental IDs, `source: "final"`, and `isFinal: true`.
-V1 assigns `SPEAKER_01` to every turn and creates no notes, summaries, or action items. Diarization
-is deferred to issue #23, and Vietnamese batch transcription is a later issue.
+Results contain ordered turns with stable incremental IDs, `source: "final"`, `isFinal: true`, and
+null `speakerName`. With final diarization enabled and an available backend, ASR segments are
+assigned to the speaker range with maximum time overlap. Backend labels normalize deterministically
+to `SPEAKER_01`, `SPEAKER_02`, and so on by first transcript appearance; no-overlap segments use
+`UNKNOWN`.
+
+`diarizationStatus` reports `applied`, `unavailable`, `failed`, or `empty`. Diarization is
+best-effort: unavailable, malformed, empty, and exception paths still complete with a valid
+single-speaker `SPEAKER_01` transcript. Backend exceptions and temporary paths are not exposed.
+ASR failure still fails the job.
+
+The server currently ships only the disabled diarization backend. `DiarizationBackend` is the
+plug-in boundary for a later WhisperX/pyannote adapter. To prepare a deployment, set
+`ENABLE_FINAL_DIARIZATION=true`, select the adapter with `DIARIZATION_BACKEND`, and configure
+`DIARIZATION_MODEL`; until an adapter is packaged the status remains `unavailable`. If a future
+pyannote adapter requires `PYANNOTE_AUTH_TOKEN`, inject it through the environment. Never commit or
+log that token, and do not put it in request URLs. Tests use deterministic fake backends and need
+no GPU, model download, network access, or token.
+
+The server does not identify real people or provide speaker rename UI. It creates no notes,
+summaries, action items, or exports. Vietnamese diarization and batch transcription remain later
+work.
 
 ## Ephemeral temporary storage
 

@@ -121,6 +121,7 @@ Multi-process coordination and distributed queueing are future work.
   "meetingId": "mtg_20260617_001",
   "language": "en",
   "generatedAt": "2026-06-20T10:01:15.000Z",
+  "diarizationStatus": "applied",
   "turns": [{
     "id": "turn_001", "meetingId": "mtg_20260617_001",
     "speakerId": "SPEAKER_01", "speakerName": null,
@@ -130,9 +131,15 @@ Multi-process coordination and distributed queueing are future work.
 }
 ```
 
-Turns are ordered by start time and assigned stable incremental IDs. V1 uses `SPEAKER_01` for
-every turn; diarization is deferred to issue #23. Results are dialogue, not bullet notes,
-summaries, or action items. Vietnamese batch transcription remains future work.
+Turns are ordered by start time and assigned stable incremental IDs. When enabled and available,
+final diarization ranges are matched to ASR segments by maximum time overlap. Raw backend labels
+are normalized to `SPEAKER_01`, `SPEAKER_02`, and so on in first-appearance order; a segment with
+no overlap uses `UNKNOWN`. The server does not infer names, so `speakerName` remains null.
+
+`diarizationStatus` is `applied`, `unavailable`, `failed`, or `empty`. Diarization is best-effort:
+an unavailable backend, exception, empty output, or malformed output does not fail successful ASR.
+Those paths return a valid single-speaker transcript using `SPEAKER_01`. Results remain dialogue,
+not bullet notes, summaries, or action items. Vietnamese batch transcription remains future work.
 
 Errors use the standard safe error shape. Final jobs may return `UNAUTHORIZED`, `EMPTY_UPLOAD`,
 `UPLOAD_TOO_LARGE`, `INVALID_LANGUAGE`, `JOB_NOT_FOUND`, `JOB_NOT_READY`,

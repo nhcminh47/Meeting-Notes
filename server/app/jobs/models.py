@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 from typing import Literal
 
 JobStatus = Literal["queued", "running", "completed", "failed", "cancelled", "expired"]
+DiarizationStatus = Literal["unavailable", "failed", "empty", "applied"]
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class FinalTranscriptResult:
     meetingId: str
     language: str
     generatedAt: str
+    diarizationStatus: DiarizationStatus
     turns: list[TranscriptTurn]
 
     def to_dict(self) -> dict[str, object]:
