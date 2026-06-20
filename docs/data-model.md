@@ -158,7 +158,10 @@ AppData/
 Each complete line in `live-transcript.jsonl` is an independent JSON event. Writers append a
 newline-terminated `turn_final` event only after a live turn becomes final; they never rewrite or
 truncate earlier events. Readers ignore an incomplete trailing line after a crash. Interim UI text
-may remain in memory and is not required to be durable.
+may remain in memory and is not required to be durable. Remote `partial` events use a temporary
+server `sessionId` for correlation and must not be appended as committed turns. When accepting a
+remote `turn_final`, the desktop remains responsible for associating it with its local `meetingId`
+before persistence.
 
 ```jsonl
 {"type":"turn_final","meetingId":"mtg_20260617_001","turnId":"turn_001","speakerId":"SPEAKER_01","speakerName":null,"start":12.4,"end":18.9,"text":"I think we should prioritize English live meetings first.","language":"en","source":"live","isFinal":true}

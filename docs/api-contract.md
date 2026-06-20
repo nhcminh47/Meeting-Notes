@@ -45,5 +45,43 @@ has `isFinal: false`; `turn_final` commits that turn with `isFinal: true`, after
 uses the next ID (`turn_001`, `turn_002`, and so on). Both include `speaker`, `start`, `end`, `text`,
 and `source: "live"`. V1 labels every turn `SPEAKER_01`; diarization is deferred.
 
+```json
+{
+  "type": "partial",
+  "sessionId": "srv_live_abc",
+  "turnId": "turn_001",
+  "speaker": "SPEAKER_01",
+  "start": 12.4,
+  "end": 15.2,
+  "text": "I think we should",
+  "source": "live",
+  "isFinal": false
+}
+```
+
+```json
+{
+  "type": "turn_final",
+  "sessionId": "srv_live_abc",
+  "turnId": "turn_001",
+  "speaker": "SPEAKER_01",
+  "start": 12.4,
+  "end": 18.9,
+  "text": "I think we should prioritize English live meetings first.",
+  "source": "live",
+  "isFinal": true
+}
+```
+
+The reusable speaker turn builder ignores empty or whitespace-only hypotheses. Partial hypotheses
+reuse the current ID without advancing the committed counter. In v1, each final ASR segment commits
+exactly one turn; adjacent final segments are not merged. This gives backends and tests a simple,
+deterministic boundary rule while real diarization and richer segmentation remain deferred.
+
+Only `turn_final` events are suitable for the desktop's append-only `live-transcript.jsonl`.
+`partial` events are revisable UI state and are not durable source of truth by default. The desktop
+may translate the temporary server `sessionId` correlation field to its locally owned `meetingId`
+when persisting a finalized turn.
+
 The server bounds audio in memory, enforces session concurrency and TTL settings, and clears the
 buffer on every close/error path. It writes no live audio or transcript to durable storage.
