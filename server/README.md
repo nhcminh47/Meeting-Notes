@@ -1,9 +1,10 @@
 # ASR Gateway Server
 
 The ASR Gateway is the authenticated, ephemeral remote-processing boundary for Local Whisper
-Studio. This foundation provides configuration, safe request logging, API-key authentication, and
-diagnostic placeholder endpoints. It is not a meeting archive and does not persist audio,
-transcripts, jobs, or other meeting data.
+Studio. It provides configuration, safe request logging, API-key authentication, diagnostic
+placeholder endpoints, and managed ephemeral workspaces. It is not a meeting archive. Any audio,
+result, or job artifacts placed in these workspaces are temporary and must never be treated as
+durable meeting data.
 
 ASR inference, model downloads, streaming, transcript jobs, diarization, and desktop integration
 are intentionally not implemented in issue #15.
@@ -41,6 +42,29 @@ The request logger never records headers, bodies, audio, or transcript content.
 | `GET /health/private` | Bearer token | Safe configuration diagnostics |
 | `GET /engines` | Bearer token | Configured engine placeholders |
 | `GET /models` | Bearer token | Configured model names |
+| `GET /admin/storage` | Bearer token | Safe temporary-storage usage and workspace counts |
+| `POST /admin/cleanup` | Bearer token | Run TTL and orphan cleanup and report safe totals |
+
+## Ephemeral temporary storage
+
+`SERVER_STORAGE_MODE=ephemeral` is the only supported storage model. `ASR_TMP_DIR` configures the
+managed root (default `/tmp/asr-gateway`) with `sessions/`, `jobs/`, and `chunks/` children. Each
+session and job directory contains `.workspace.json` metadata with its ID, kind, status, and UTC
+creation, update, and expiry timestamps.
+
+Running sessions and jobs expire according to `LIVE_SESSION_TTL_MINUTES` and
+`JOB_WORKSPACE_TTL_MINUTES`. Completed and failed jobs receive their configured terminal TTL;
+cancelled jobs are eligible for immediate cleanup. Cleanup also removes direct child folders whose
+metadata is missing or invalid. It is repeatable and refuses to target paths outside the managed
+session and job roots.
+
+`MAX_TMP_STORAGE_GB` supplies a guard for future processing routes. The guard runs expiry cleanup,
+then reports whether the root remains over its limit; it never evicts active, non-expired work just
+to create capacity. `DELETE_RESULT_AFTER_READ` controls the result-removal hook reserved for a
+future final-job implementation.
+
+The admin responses expose only paths, byte totals, counts, and safe cleanup errors. They never
+return audio, transcript text, request bodies, authorization headers, or API keys.
 
 ## Docker
 

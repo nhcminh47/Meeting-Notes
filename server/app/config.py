@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,6 +12,7 @@ class Settings(BaseSettings):
     server_port: int = Field(default=8000, ge=1, le=65535)
     server_api_key: str = "change-me"
     server_storage_mode: str = "ephemeral"
+    asr_tmp_dir: Path = Path("/tmp/asr-gateway")
 
     default_language: str = "en"
     default_live_engine: str = "faster-whisper-live"
@@ -31,7 +33,7 @@ class Settings(BaseSettings):
     delete_input_after_job: bool = True
     delete_result_after_read: bool = True
     max_upload_mb: int = Field(default=1024, ge=1)
-    max_tmp_storage_gb: int = Field(default=10, ge=1)
+    max_tmp_storage_gb: float = Field(default=10, gt=0)
 
 
 @lru_cache
