@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from app.errors import install_error_handlers
 from app.logging import configure_logging, install_request_logging
-from app.routes import admin, engines, health, live, models
+from app.routes import admin, engines, health, jobs, live, models
 
 
 def create_app() -> FastAPI:
@@ -14,6 +14,7 @@ def create_app() -> FastAPI:
     application.include_router(engines.router)
     application.include_router(models.router)
     application.include_router(admin.router)
+    application.include_router(jobs.router)
     application.include_router(live.router)
     return application
 

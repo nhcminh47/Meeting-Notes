@@ -90,3 +90,51 @@ lookup and the authentication message remain in the Electron main process.
 
 The server bounds audio in memory, enforces session concurrency and TTL settings, and clears the
 buffer on every close/error path. It writes no live audio or transcript to durable storage.
+
+## Final transcript jobs
+
+All final-job endpoints require `Authorization: Bearer <apiKey>`; query-string credentials are
+ignored. V1 runs processing synchronously inside `POST /jobs/finalize`, while preserving a job
+resource and status contract for a future queue. A successful create returns `status: "completed"`.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /jobs/finalize` | Accept a temporary multipart recording and run English final ASR. |
+| `GET /jobs/{jobId}` | Return safe lifecycle timestamps and status. |
+| `GET /jobs/{jobId}/result` | Return the normalized completed transcript. |
+| `POST /jobs/{jobId}/cancel` | Mark queued/running work cancelled and cleanup-eligible. |
+
+The create request contains required `file`, optional `meetingId`, and optional `language`
+(default `en`). Empty files return `EMPTY_UPLOAD`; files over `MAX_UPLOAD_MB` return
+`UPLOAD_TOO_LARGE`. Common audio extensions are retained for decoder compatibility; unknown
+extensions become `.bin`, and the supplied filename never controls the workspace path. Other
+languages return `INVALID_LANGUAGE`.
+
+Statuses are `queued`, `running`, `completed`, `failed`, `cancelled`, and `expired`.
+`MAX_CONCURRENT_JOBS` is an in-process limit; saturation returns `JOB_CONCURRENCY_LIMIT`.
+Multi-process coordination and distributed queueing are future work.
+
+```json
+{
+  "schemaVersion": 1,
+  "jobId": "job_abc123",
+  "meetingId": "mtg_20260617_001",
+  "language": "en",
+  "generatedAt": "2026-06-20T10:01:15.000Z",
+  "turns": [{
+    "id": "turn_001", "meetingId": "mtg_20260617_001",
+    "speakerId": "SPEAKER_01", "speakerName": null,
+    "start": 0.0, "end": 3.2, "text": "Hello everyone, let's begin.",
+    "language": "en", "source": "final", "isFinal": true, "confidence": null
+  }]
+}
+```
+
+Turns are ordered by start time and assigned stable incremental IDs. V1 uses `SPEAKER_01` for
+every turn; diarization is deferred to issue #23. Results are dialogue, not bullet notes,
+summaries, or action items. Vietnamese batch transcription remains future work.
+
+Errors use the standard safe error shape. Final jobs may return `UNAUTHORIZED`, `EMPTY_UPLOAD`,
+`UPLOAD_TOO_LARGE`, `INVALID_LANGUAGE`, `JOB_NOT_FOUND`, `JOB_NOT_READY`,
+`JOB_CONCURRENCY_LIMIT`, `JOB_CANCELLED`, `JOB_FAILED`, or `PROCESSING_ERROR`. Responses never
+disclose credentials, content, or temporary paths.

@@ -23,3 +23,16 @@ Storage usage is measured across the temporary root and compared with `MAX_TMP_S
 Expired work is removed before evaluating this guard. Active, non-expired sessions and jobs are not
 silently evicted to make room. Protected admin endpoints provide aggregate usage and cleanup
 results only, without exposing meeting content or credentials.
+
+## Final transcript job lifecycle
+
+Each `POST /jobs/finalize` creates exactly one directory below `ASR_TMP_DIR/jobs`. The uploaded
+recording, temporary result, and workspace metadata stay inside that directory. The server returns
+neither the recording nor any temporary path.
+
+`DELETE_INPUT_AFTER_JOB=true` removes the upload after processing, including failed processing.
+Completed and failed workspaces remain only until `COMPLETED_JOB_TTL_MINUTES` and
+`FAILED_JOB_TTL_MINUTES`, respectively. Cancelled workspaces are immediately cleanup-eligible.
+With `DELETE_RESULT_AFTER_READ=true`, a successful result read removes `result.json`; workspace
+metadata remains until TTL cleanup so status remains safely observable. Cleanup stays scoped to
+the manager-owned jobs root and is safe to repeat.

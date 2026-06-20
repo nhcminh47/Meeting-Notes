@@ -6,8 +6,9 @@ placeholder endpoints, and managed ephemeral workspaces. It is not a meeting arc
 result, or job artifacts placed in these workspaces are temporary and must never be treated as
 durable meeting data.
 
-English live ASR v1 is implemented over authenticated WebSocket PCM. Final transcript jobs,
-diarization, model downloads, and production desktop integration are not implemented.
+English live ASR v1 is implemented over authenticated WebSocket PCM. The final transcript job API
+provides single-speaker English batch ASR. Diarization, model downloads, and production desktop
+final-transcript integration are not implemented.
 
 ## Run locally
 
@@ -22,10 +23,10 @@ $env:SERVER_API_KEY = "replace-with-a-local-development-key"
 uvicorn app.main:app --reload
 ```
 
-For real live ASR, install `pip install -e ".[dev,live]"`. The default backend lazily loads
-`faster-whisper` model `small.en`; model acquisition and device selection follow faster-whisper's
-runtime behavior. Set `LIVE_FAKE_ASR=true` only for tests or deliberate transport development; the
-server never silently substitutes fake transcripts when the real backend is unavailable.
+For real live or final ASR, install `pip install -e ".[dev,asr]"`. The default backends lazily load
+`faster-whisper` models `small.en` and `medium.en`; model acquisition and device selection follow
+faster-whisper's runtime behavior. Set `LIVE_FAKE_ASR=true` or `FINAL_FAKE_ASR=true` only for tests
+or deliberate API development. The server never silently substitutes fake transcripts.
 
 Run tests with `pytest`. The public health endpoint is available at
 `http://localhost:8000/health`.
@@ -50,6 +51,10 @@ The request logger never records headers, bodies, audio, or transcript content.
 | `GET /admin/storage` | Bearer token | Safe temporary-storage usage and workspace counts |
 | `POST /admin/cleanup` | Bearer token | Run TTL and orphan cleanup and report safe totals |
 | `WS /live/sessions/{sessionId}/stream` | First-message API key | English live ASR over binary PCM |
+| `POST /jobs/finalize` | Bearer token | Upload and process a temporary recording |
+| `GET /jobs/{jobId}` | Bearer token | Read safe final-job status |
+| `GET /jobs/{jobId}/result` | Bearer token | Read a completed normalized transcript |
+| `POST /jobs/{jobId}/cancel` | Bearer token | Cancel queued/running work |
 
 ## English live ASR v1
 
@@ -78,6 +83,22 @@ timeout, or error. Audio, auth payloads, and transcript text are not logged or w
 storage. `MAX_CONCURRENT_LIVE_SESSIONS`, `LIVE_AUDIO_BUFFER_SECONDS`, and
 `LIVE_SESSION_TTL_MINUTES` bound live resource use.
 
+## Final transcript jobs v1
+
+Send `POST /jobs/finalize` as multipart form data with an audio `file`, optional client-owned
+`meetingId`, and optional `language=en`. `MAX_UPLOAD_MB` bounds the upload. V1 processes the request
+synchronously, so success reports `completed`; the persisted status API can support a future
+asynchronous queue. `MAX_CONCURRENT_JOBS` is shared within one server process. Multi-worker or
+distributed coordination is not yet provided.
+
+`DEFAULT_FINAL_ENGINE=faster-whisper` loads `DEFAULT_FINAL_MODEL=medium.en`. Tests explicitly set
+`FINAL_FAKE_ASR=true`, producing deterministic dialogue without a GPU or model download. This is
+never an automatic production fallback.
+
+Results contain ordered turns with stable incremental IDs, `source: "final"`, and `isFinal: true`.
+V1 assigns `SPEAKER_01` to every turn and creates no notes, summaries, or action items. Diarization
+is deferred to issue #23, and Vietnamese batch transcription is a later issue.
+
 ## Ephemeral temporary storage
 
 `SERVER_STORAGE_MODE=ephemeral` is the only supported storage model. `ASR_TMP_DIR` configures the
@@ -91,10 +112,11 @@ cancelled jobs are eligible for immediate cleanup. Cleanup also removes direct c
 metadata is missing or invalid. It is repeatable and refuses to target paths outside the managed
 session and job roots.
 
-`MAX_TMP_STORAGE_GB` supplies a guard for future processing routes. The guard runs expiry cleanup,
+`MAX_TMP_STORAGE_GB` supplies a temporary-storage guard. The guard runs expiry cleanup,
 then reports whether the root remains over its limit; it never evicts active, non-expired work just
-to create capacity. `DELETE_RESULT_AFTER_READ` controls the result-removal hook reserved for a
-future final-job implementation.
+to create capacity. `DELETE_INPUT_AFTER_JOB` removes final-job uploads after processing.
+`DELETE_RESULT_AFTER_READ` removes a result after successful delivery while preserving status
+metadata until TTL cleanup.
 
 The admin responses expose only paths, byte totals, counts, and safe cleanup errors. They never
 return audio, transcript text, request bodies, authorization headers, or API keys.
