@@ -179,6 +179,13 @@ export type LiveMeetingEvent =
   | { type: "status"; status: LiveMeetingStatus }
   | { type: "connection"; event: LiveConnectionEvent };
 
+export type MeetingNoteView = {
+  meetingId: string;
+  status: "completed";
+  source: "final-transcript.json";
+  markdown: string;
+};
+
 export type LocalStudioApi = {
   windowControls: {
     minimize: () => Promise<void>;
@@ -241,5 +248,10 @@ export type LocalStudioApi = {
     getSpeakers: (meetingId: string) => Promise<SpeakerFile>;
     renameSpeaker: (input: { meetingId: string; speakerId: string; name: string }) => Promise<SpeakerFile>;
     clearSpeakerName: (input: { meetingId: string; speakerId: string }) => Promise<SpeakerFile>;
+  };
+  meetingNotes: {
+    get: (input: { meetingId: string }) => Promise<MeetingNoteView | null>;
+    generate: (input: { meetingId: string }) => Promise<MeetingNoteView>;
+    regenerate: (input: { meetingId: string }) => Promise<MeetingNoteView>;
   };
 };

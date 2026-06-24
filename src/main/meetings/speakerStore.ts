@@ -32,7 +32,7 @@ function labelFor(speakerId: string): string {
   return `Speaker ${Number(speakerId.slice("SPEAKER_".length))}`;
 }
 
-async function meetingFolder(meetingsRoot: string, meetingId: string): Promise<string> {
+export async function meetingFolder(meetingsRoot: string, meetingId: string): Promise<string> {
   validateMeetingId(meetingId);
   const root = await realpath(meetingsRoot).catch(() => {
     throw new Error("Meetings folder is unavailable.");

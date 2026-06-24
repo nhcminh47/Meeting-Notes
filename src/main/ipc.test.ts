@@ -34,6 +34,7 @@ import {
   finishLiveTranscriptSessionSchema,
   jobIdSchema,
   liveTranscriptChunkSchema,
+  meetingNoteSchema,
   recordingEventSchema,
   registerIpcHandlers,
   runtimeItemSchema,
@@ -47,6 +48,11 @@ describe("IPC schemas", () => {
   it("only accepts allowlisted runtime item IDs", () => {
     expect(runtimeItemSchema.parse("model-medium")).toBe("model-medium");
     expect(() => runtimeItemSchema.parse("../../payload")).toThrow();
+  });
+
+  it("validates meeting note requests without accepting paths or credentials", () => {
+    expect(meetingNoteSchema.parse({ meetingId: "mtg_valid_25" })).toEqual({ meetingId: "mtg_valid_25" });
+    expect(() => meetingNoteSchema.parse({ meetingId: "../../secret", apiKey: "nope" })).toThrow();
   });
 
   it("rejects arbitrary transcription options", () => {

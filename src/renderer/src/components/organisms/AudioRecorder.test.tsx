@@ -58,7 +58,8 @@ function createApi(): LocalStudioApi {
     diagnostics: {} as LocalStudioApi["diagnostics"],
     remoteSettings: {} as LocalStudioApi["remoteSettings"],
     liveMeeting: {} as LocalStudioApi["liveMeeting"],
-    speakers: {} as LocalStudioApi["speakers"]
+    speakers: {} as LocalStudioApi["speakers"],
+    meetingNotes: {} as LocalStudioApi["meetingNotes"]
   };
 }
 
