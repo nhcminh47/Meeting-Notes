@@ -1607,7 +1607,8 @@
   }
 }
 
-.meeting-note {
+.meeting-note,
+.export-panel {
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
@@ -1623,7 +1624,54 @@
   }
 
   &__error { color: #a53c2c; }
+}
 
+.export-panel {
+  &__formats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+
+    label {
+      display: inline-flex;
+      min-height: 2.15rem;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.55rem;
+      border: 1px solid rgb(198 124 70 / 0.3);
+      border-radius: 0.55rem;
+      color: #66402c;
+      background: white;
+      font-size: 0.68rem;
+      font-weight: 750;
+    }
+
+    input {
+      accent-color: #c8662f;
+    }
+  }
+
+  &__files {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    code {
+      display: block;
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.45rem;
+      color: #73513e;
+      background: white;
+      font: inherit;
+      font-size: 0.65rem;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+.meeting-note {
   &__preview {
     max-height: 24rem;
     overflow: auto;

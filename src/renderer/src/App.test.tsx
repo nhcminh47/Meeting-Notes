@@ -100,6 +100,9 @@ beforeEach(() => {
       get: vi.fn(async () => null),
       generate: vi.fn(),
       regenerate: vi.fn()
+    },
+    exports: {
+      exportMeeting: vi.fn()
     }
   };
 });

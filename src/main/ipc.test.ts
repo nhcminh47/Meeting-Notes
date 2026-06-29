@@ -31,6 +31,7 @@ vi.mock("electron", () => ({
 
 import {
   convertAudioSchema,
+  exportMeetingSchema,
   finishLiveTranscriptSessionSchema,
   jobIdSchema,
   liveTranscriptChunkSchema,
@@ -53,6 +54,16 @@ describe("IPC schemas", () => {
   it("validates meeting note requests without accepting paths or credentials", () => {
     expect(meetingNoteSchema.parse({ meetingId: "mtg_valid_25" })).toEqual({ meetingId: "mtg_valid_25" });
     expect(() => meetingNoteSchema.parse({ meetingId: "../../secret", apiKey: "nope" })).toThrow();
+  });
+
+  it("validates export requests without accepting paths, credentials, or unsupported formats", () => {
+    expect(exportMeetingSchema.parse({ meetingId: "mtg_valid_26", formats: ["txt", "json", "srt", "vtt", "md"] })).toMatchObject({
+      meetingId: "mtg_valid_26",
+      formats: ["txt", "json", "srt", "vtt", "md"]
+    });
+    expect(() => exportMeetingSchema.parse({ meetingId: "../../secret", formats: ["txt"] })).toThrow();
+    expect(() => exportMeetingSchema.parse({ meetingId: "mtg_valid_26", formats: ["zip"] })).toThrow();
+    expect(() => exportMeetingSchema.parse({ meetingId: "mtg_valid_26", formats: ["txt"], apiKey: "sk-nope" })).toThrow();
   });
 
   it("rejects arbitrary transcription options", () => {

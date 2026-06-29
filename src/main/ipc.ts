@@ -31,6 +31,7 @@ import { remoteSettingsService } from "./remote/remoteSettings";
 import { RemoteLiveSession } from "./remote/remoteLiveSession";
 import { clearSpeakerName, getSpeakers, renameSpeaker } from "./meetings/speakerStore";
 import { MeetingNoteService } from "./meetings/meetingNoteService";
+import { ExportService } from "./meetings/exportService";
 
 const selectedAudioPaths = new Set<string>();
 const managedAudioPaths = new Set<string>();
@@ -116,6 +117,9 @@ export const speakerRenameSchema = speakerMutationSchema.extend({
   name: z.string().max(256)
 });
 export const meetingNoteSchema = speakerMeetingSchema;
+export const exportMeetingSchema = speakerMeetingSchema.extend({
+  formats: z.array(z.enum(["txt", "json", "srt", "vtt", "md"])).min(1).max(5)
+}).strict();
 
 function meetingsRoot(): string {
   return path.join(app.getPath("userData"), "meetings");
@@ -232,6 +236,10 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("meeting-notes:regenerate", async (_event, rawInput: unknown) => {
     const input = meetingNoteSchema.parse(rawInput);
     return new MeetingNoteService(meetingsRoot()).generate(input.meetingId, true);
+  });
+  ipcMain.handle("exports:export-meeting", async (_event, rawInput: unknown) => {
+    const input = exportMeetingSchema.parse(rawInput);
+    return new ExportService(meetingsRoot()).exportMeeting(input);
   });
   ipcMain.handle("runtime:get-status", async () => getRuntimeStatus());
   ipcMain.handle("runtime:ensure-required", async () => ensureRequiredRuntime());

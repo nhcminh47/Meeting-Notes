@@ -162,6 +162,15 @@ const browserApi: LocalStudioApi = {
     get: async () => null,
     generate: async (input) => ({ meetingId: input.meetingId, status: "completed", source: "final-transcript.json", markdown: "# Meeting Note" }),
     regenerate: async (input) => ({ meetingId: input.meetingId, status: "completed", source: "final-transcript.json", markdown: "# Meeting Note" })
+  },
+  exports: {
+    exportMeeting: async (input) => ({
+      ok: true,
+      files: input.formats.map((format) => ({
+        format,
+        path: format === "md" ? "exports/meeting-note.md" : `exports/transcript.${format}`
+      }))
+    })
   }
 };
 
