@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.6.0...v0.7.0) (2026-06-29)
+
+
+### Features
+
+* Implement meeting note generation ([#51](https://github.com/nhcminh47/Meeting-Notes/issues/51)) ([d919480](https://github.com/nhcminh47/Meeting-Notes/commit/d919480e3f4e2417766bfa53805d0477987dc6de))
+
 ## [0.6.0](https://github.com/nhcminh47/Meeting-Notes/compare/v0.5.0...v0.6.0) (2026-06-20)
 
 
