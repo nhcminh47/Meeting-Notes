@@ -11,3 +11,4 @@ issue plan.txt
 !.env.example
 server/tmp/
 server/data/
+benchmark-results/
