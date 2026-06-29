@@ -53,8 +53,8 @@ access. Rename never calls the server and never rewrites `live-transcript.jsonl`
 
 Renderers resolve current display text from `speakers.json` name, speaker label, the turn's nullable
 `speakerName` snapshot, stable `speakerId`/`speaker`, then `UNKNOWN`. The server does not identify
-real people. Diarization, summary generation, export UI, and language-mode behavior are
-intentionally deferred to later issues.
+real people. Diarization, additional summary backends, and language-mode behavior are intentionally
+deferred to later issues.
 
 ## Meeting note generation
 
@@ -68,6 +68,19 @@ empty text is ignored, timestamps are included, and speaker display names resolv
 `speakers.json` metadata. Missing, invalid, empty, or oversized final transcripts fail safely; live
 partial/final events are not an automatic fallback. The local template summarizer provides offline,
 deterministic output with the required sections. No cloud summarizer is configured in this issue.
+
+## Local exports
+
+The renderer accesses exports through the narrow `exports.exportMeeting` preload method. It sends a
+meeting ID and selected formats only; it does not receive unrestricted filesystem access. The main
+process validates the meeting folder, reads local source artifacts, writes into that meeting's
+`exports/` folder, and returns safe meeting-relative paths such as `exports/transcript.txt`.
+
+Transcript exports support TXT, JSON, SRT, and VTT. They use `final-transcript.json` as the default
+source, resolve current speaker display names from `speakers.json`, and do not read live partial
+events or call the server. Markdown export copies `meeting-note.md` as a derived artifact and does
+not regenerate the note. The current UI overwrites the fixed export filenames only after the user
+clicks Export.
 
 ## Remote credentials
 

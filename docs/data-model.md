@@ -159,6 +159,13 @@ names resolved from `speakers.json`. It is never used as input to regenerate its
 JSONL recovery log is not a default summary source. Regeneration replaces only this derived file;
 the canonical final transcript and append-only live transcript remain unchanged.
 
+`exports/` is created on demand for user-triggered local exports. Transcript exports are derived
+from `final-transcript.json` by default as `transcript.txt`, `transcript.json`, `transcript.srt`,
+and `transcript.vtt`. Meeting note export copies `meeting-note.md` to `exports/meeting-note.md`.
+Export rendering uses the same speaker display order as transcript display: `speakers.json` name,
+speaker label, turn `speakerName`, stable `speakerId`/legacy `speaker`, then `UNKNOWN`. Export
+files are local derived artifacts; the server does not store them.
+
 ### Append-only live transcript
 
 Each complete line in `live-transcript.jsonl` is an independent JSON event. Writers append a

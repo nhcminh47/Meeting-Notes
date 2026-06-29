@@ -186,6 +186,18 @@ export type MeetingNoteView = {
   markdown: string;
 };
 
+export type ExportFormat = "txt" | "json" | "srt" | "vtt" | "md";
+
+export type ExportMeetingInput = {
+  meetingId: string;
+  formats: ExportFormat[];
+};
+
+export type ExportMeetingResult = {
+  ok: true;
+  files: Array<{ format: ExportFormat; path: string }>;
+};
+
 export type LocalStudioApi = {
   windowControls: {
     minimize: () => Promise<void>;
@@ -253,5 +265,8 @@ export type LocalStudioApi = {
     get: (input: { meetingId: string }) => Promise<MeetingNoteView | null>;
     generate: (input: { meetingId: string }) => Promise<MeetingNoteView>;
     regenerate: (input: { meetingId: string }) => Promise<MeetingNoteView>;
+  };
+  exports: {
+    exportMeeting: (input: ExportMeetingInput) => Promise<ExportMeetingResult>;
   };
 };

@@ -80,6 +80,9 @@ const api: LocalStudioApi = {
     get: (input) => ipcRenderer.invoke("meeting-notes:get", input),
     generate: (input) => ipcRenderer.invoke("meeting-notes:generate", input),
     regenerate: (input) => ipcRenderer.invoke("meeting-notes:regenerate", input)
+  },
+  exports: {
+    exportMeeting: (input) => ipcRenderer.invoke("exports:export-meeting", input)
   }
 };
 
